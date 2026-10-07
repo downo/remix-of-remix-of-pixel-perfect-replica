@@ -110,13 +110,13 @@ export function bonus(s: GameState) {
 
 // ---------- expeditions ----------
 export interface Expedition { id: string; name: string; icon: string; region: string; stages: number; danger: number; loot: [string, number][]; desc: string }
-export const EXPEDITIONS: Expedition[] = [
+export const EXPEDITIONS: Expedition[] = ([
   { id: "x_forest", name: "Sügav mets", icon: "🌲", region: "forest", stages: 3, danger: 1, loot: [["wood", 4], ["herb", 2], ["meat", 2], ["hide", 1]], desc: "Lühike retk metsa südamesse." },
   { id: "x_ruins", name: "Varemete keldrid", icon: "🏚️", region: "ruins", stages: 4, danger: 1.5, loot: [["scrap", 4], ["cloth", 2], ["wire", 2], ["can", 1]], desc: "Keldrid, kuhu keegi pole ammu läinud." },
   { id: "x_mine", name: "Hüljatud šaht", icon: "⛏️", region: "mine", stages: 4, danger: 2.2, loot: [["ore", 3], ["stone", 4], ["crystal", 1]], desc: "Rauamaak ja harva kristallid. Ja pimedus." },
   { id: "x_city", name: "Surnud linn", icon: "🏙️", region: "city", stages: 5, danger: 3, loot: [["scrap", 5], ["wire", 3], ["antirad", 1], ["can", 2]], desc: "Pikk ja ohtlik. Hea saak." },
   { id: "x_rift", name: "Lõhe serv", icon: "🌀", region: "depths3", stages: 6, danger: 4.5, loot: [["crystal", 2], ["voidshard", 1], ["ore", 3]], desc: "Kõige ohtlikum retk. Lõpus ootab legendaarne leid." },
-].filter((x) => REGIONS[x.region]);
+] as Expedition[]).filter((x) => REGIONS[x.region]);
 export const EXP_WEEK_GOAL = 5;
 export const EXP_ENERGY = 8;
 export interface ExpRun { id: string; stage: number; loot: Record<string, number>; log: string[] }
