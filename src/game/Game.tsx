@@ -12,7 +12,7 @@ import { WorldTab } from "./WorldTab";
 import { StoryQuests } from "./StoryQuests";
 import { Knowledge } from "./LoreTabs";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
-import { Portrait } from "./portraits";
+import { Portrait, BASE_IMG } from "./portraits";
 
 /** Shows a portrait card the moment the player meets a new survivor. */
 function MeetPopup({ s }: { s: GameState }) {
@@ -370,6 +370,7 @@ function BaseTab({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean }) {
       )}
       <div>
         <H>Baas {atCamp ? "" : "(ehitamine ainult laagris)"}</H>
+        {BASE_IMG.camp && <img src={BASE_IMG.camp} alt="Laager" className="mb-2 w-full border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
         <DefensePanel s={s} mut={mut} />
         <div className="grid gap-2 sm:grid-cols-2">
           {Object.values(STRUCTURES).map((st) => {
@@ -377,7 +378,9 @@ function BaseTab({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean }) {
             const locked = st.requires && !s.structures[st.requires];
             const maxed = lvl >= st.maxLevel;
             return (
-              <div key={st.id} className={`border-2 p-2 ${lvl ? "border-primary/50" : ""} ${locked ? "opacity-50" : ""}`}>
+              <div key={st.id} className={`flex gap-2 border-2 p-2 ${lvl ? "border-primary/50" : ""} ${locked ? "opacity-50" : ""}`}>
+                {BASE_IMG[st.id] && <img src={BASE_IMG[st.id]} alt={st.name} loading="lazy" className="h-16 w-16 shrink-0 border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
+                <div className="min-w-0 flex-1">
                 <div className="flex justify-between"><span>{st.icon} {st.name}</span><span className="text-accent">{lvl}/{st.maxLevel}</span></div>
                 <div className="text-base text-muted-foreground">{st.desc}</div>
                 {locked ? <div className="text-base text-destructive">Vajab: {STRUCTURES[st.requires!].name}</div> : !maxed && (
@@ -386,6 +389,7 @@ function BaseTab({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean }) {
                     <button disabled={busy || !atCamp || !hasB(s, st.cost)} className="px-btn" onClick={() => mut((g) => startAction(g, "build", `🏗️ Ehitad: ${st.name}`, st.id))}>{lvl ? "Arenda" : "Ehita"}</button>
                   </div>
                 )}
+                </div>
               </div>
             );
           })}
