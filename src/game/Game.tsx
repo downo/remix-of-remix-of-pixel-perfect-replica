@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CODEX, CODEX_FINAL, PET_KINDS, ENEMIES, EVENTS, ITEMS, NPCS, RECIPES, REGIONS, SKILLS, STRUCTURES, LORE, applyTekstid, type ItemType, type SkillId } from "./data";
 import {
   QUESTS, ACHIEVEMENTS, ENDINGS, hasB, dropItem, chestPut, chestTake, chestCap, chestLoad, armorDef, canStart, capacity, clock, combatAct, durationFor, equipItem, has, hasCompanion, load, loadSave, newGame,
-  resolveEvent, save, canTame, tame, feedPet, renamePet, releasePet, kennelSlots, kennelStore, kennelTake, kennelRelease, breedPets, BREED_COST, BREED_COOLDOWN, WEATHER_FX, baseDefense, raidPower, repairStructure, repairCost, startBoss, bossReady, bountyFor, trophyCount, weekKey, isMini, INTENTS, MINI_FOR_DANGER, dailyFor, dailyProgress, claimDaily, weeklyFor, weeklyContribution, sealRift, skillLevel, startAction, tick, useItem, weaponDmg, weatherFor, seasonFor, PET_MUTS, wipe, xpForLevel, type GameState,
+  resolveEvent, save, canTame, tame, feedPet, renamePet, releasePet, kennelSlots, kennelStore, kennelTake, kennelRelease, breedPets, BREED_COST, BREED_COOLDOWN, WEATHER_FX, baseDefense, raidPower, repairStructure, repairCost, startBoss, bossReady, bountyFor, trophyCount, weekKey, isMini, isBoss, intentText, PHASES, MINI_FOR_DANGER, dailyFor, dailyProgress, claimDaily, weeklyFor, weeklyContribution, sealRift, skillLevel, startAction, tick, useItem, weaponDmg, weatherFor, seasonFor, PET_MUTS, wipe, xpForLevel, type GameState,
 } from "./engine";
 import { OnlineTab, syncOnline, useOnlineUser, fetchCloudSave, ResetPassword, Account } from "./Online";
 import { blip } from "./sound";
@@ -234,6 +234,8 @@ function ActionBar({ s }: { s: GameState }) {
 
 type Mut = (fn: (g: GameState) => string | null | void) => void;
 
+const ENEMY_IMG: Record<string, string> = Object.fromEntries(Object.entries(import.meta.glob("@/assets/enemies/*.jpg", { eager: true, import: "default" }) as Record<string, string>).map(([k, v]) => [k.split("/").pop()!.replace(".jpg", ""), v]));
+
 function Combat({ s, mut }: { s: GameState; mut: Mut }) {
   const e = ENEMIES[s.combat!.enemy];
   const prev = useRef(s.combat!.hp);
@@ -245,24 +247,27 @@ function Combat({ s, mut }: { s: GameState; mut: Mut }) {
   return (
     <div className="px-panel border-destructive p-3">
       <div className="flex items-center gap-3">
-        <div key={hits} className={`text-5xl ${hits ? "hit" : ""}`}>{e.icon}</div>
+        <div key={hits} className={`shrink-0 ${hits ? "hit" : ""}`}>
+          {ENEMY_IMG[e.id] ? <img src={ENEMY_IMG[e.id]} alt={e.name} className={`border-2 object-cover ${isBoss(e.id) ? "h-36 w-36 border-destructive" : "h-24 w-24 border-border"}`} style={{ imageRendering: "pixelated" }} /> : <span className="text-5xl">{e.icon}</span>}
+        </div>
         <div className="flex-1">
-          <div className="px-title text-destructive">☠ {e.name}{e.id === "heart" && " — BOSS"}{isMini(e.id) && ` — MINIBOSS${s.combat!.rage ? " 🔥MARU" : ""}`}</div>
+          <div className="px-title text-destructive">☠ {e.name}{e.id === "heart" && " — BOSS"}{isMini(e.id) && " — MINIBOSS"}{isBoss(e.id) && (s.combat!.phase ? ` · ${PHASES[s.combat!.phase - 1].name}` : " · FAAS 1")}</div>
           <div className="text-muted-foreground">{e.desc}</div>
           <div className="px-bar mt-1 text-destructive"><span style={{ width: `${(s.combat!.hp / e.hp) * 100}%` }} /></div>
           <div className="text-base">HP {Math.max(0, s.combat!.hp)}/{e.hp} · Kahju ~{e.dmg} · Sinu relv {weaponDmg(s)} · Kaitse {armorDef(s)}</div>
         </div>
       </div>
-      {isMini(e.id) && s.combat!.intent && (
-        <div key={s.combat!.hp + s.combat!.intent} className="pulse mt-2 border-2 border-accent p-2">
-          <div className="text-accent">{INTENTS[s.combat!.intent].icon} {e.name} {INTENTS[s.combat!.intent].text}</div>
-          <div className="text-base text-muted-foreground">Vihje: {INTENTS[s.combat!.intent].hint}</div>
+      {(() => { const it = intentText(s); return it && (
+        <div key={s.combat!.hp + s.combat!.intent!} className="pulse mt-2 border-2 border-accent p-2">
+          <div className="text-accent">{it.icon} {e.name} {it.text}</div>
+          <div className="text-base text-muted-foreground">Vihje: {it.hint}</div>
         </div>
-      )}
+      ); })()}
       <div className="mt-2 flex flex-wrap gap-2">
         <button className="px-btn px-btn-primary" onClick={() => mut((g) => combatAct(g, "attack"))}>⚔️ Ründa</button>
         <button className="px-btn" onClick={() => mut((g) => combatAct(g, "heavy"))}>💥 Raske löök (−6⚡)</button>
         <button className="px-btn" onClick={() => mut((g) => combatAct(g, "defend"))}>🛡️ Kaitse</button>
+        <button className="px-btn" disabled={!!s.combat!.special} title="Kord lahingus: 1,5× kahju ja vaenlane jääb käigust ilma" onClick={() => mut((g) => combatAct(g, "special"))}>🌟 Erivõime (−12⚡)</button>
         <button className="px-btn" onClick={() => mut((g) => combatAct(g, "heal"))}>🩹 Ravi ({(s.inv.bandage || 0) + (s.inv.salve || 0)})</button>
         {PET_KINDS[s.combat!.enemy] && <button disabled={!canTame(s)} title="Vaenlane peab olema alla 35% HP ja sul peab olema liha" className="px-btn" onClick={() => mut((g) => tame(g))}>🐾 Taltsuta (🥩1)</button>}
         <button className="px-btn px-btn-danger" onClick={() => mut((g) => combatAct(g, "flee"))}>🏃 Põgene</button>
