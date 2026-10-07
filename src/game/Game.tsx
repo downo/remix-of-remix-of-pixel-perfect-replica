@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CODEX, CODEX_FINAL, PET_KINDS, ENEMIES, EVENTS, ITEMS, NPCS, RECIPES, REGIONS, SKILLS, STRUCTURES, LORE, applyTekstid, type ItemType, type SkillId } from "./data";
 import {
-  QUESTS, ACHIEVEMENTS, armorDef, canStart, capacity, clock, combatAct, durationFor, equipItem, has, hasCompanion, load, loadSave, newGame,
+  QUESTS, ACHIEVEMENTS, ENDINGS, armorDef, canStart, capacity, clock, combatAct, durationFor, equipItem, has, hasCompanion, load, loadSave, newGame,
   resolveEvent, save, canTame, tame, feedPet, renamePet, releasePet, kennelSlots, kennelStore, kennelTake, kennelRelease, breedPets, BREED_COST, BREED_COOLDOWN, WEATHER_FX, baseDefense, raidPower, repairStructure, repairCost, startBoss, bossReady, bountyFor, trophyCount, weekKey, isMini, INTENTS, MINI_FOR_DANGER, dailyFor, dailyProgress, claimDaily, weeklyFor, weeklyContribution, sealRift, skillLevel, startAction, tick, useItem, weaponDmg, weatherFor, seasonFor, PET_MUTS, wipe, xpForLevel, type GameState,
 } from "./engine";
 import { OnlineTab, syncOnline, useOnlineUser, fetchCloudSave, ResetPassword, Account } from "./Online";
