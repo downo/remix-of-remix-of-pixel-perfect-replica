@@ -319,34 +319,19 @@ function BaseTab({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean }) {
     <div className="space-y-4">
       <Tutorial s={s} mut={mut} />
       <div>
-        <H>Tegevused</H>
+        <H>Laager</H>
+        <p className="mb-2 text-base text-muted-foreground">Kogumine, uurimine, jaht ja kalapüük on nüüd 🗺️ Kaardi all — seal, kus sa parajasti oled.</p>
         <div className="flex flex-wrap gap-2">
-          <button disabled={busy} className="px-btn px-btn-primary" onClick={() => mut((g) => startAction(g, "gather", `🔨 Kogud ressursse: ${reg.name}`))}>🪓 Kogu ({fmt(durationFor(s, "gather"))})</button>
-          <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "explore", `🧭 Uurid ümbrust`))}>🧭 Uuri ({fmt(durationFor(s, "explore"))})</button>
-          {s.region === "flooded" && <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "fish", "🎣 Püüd kala"))}>🎣 Püüda ({fmt(durationFor(s, "fish"))})</button>}
-          {reg.danger > 0 && <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "hunt", "🏹 Jahid"))}>🏹 Jahi ({fmt(durationFor(s, "hunt"))})</button>}
           {atCamp && <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "rest", s.structures.bed ? "🛏️ Magad voodis" : "😴 Puhkad"))}>{s.structures.bed ? "🛏️ Maga" : "😴 Puhka"} (1m)</button>}
-          {reg.danger > 0 && <button disabled={busy || !bossReady(s)} title={bossReady(s) ? "Vajab 15 energiat" : "Alistatud — uus koletis homme"} className="px-btn px-btn-danger" onClick={() => mut((g) => startBoss(g))}>👹 {ENEMIES[MINI_FOR_DANGER[reg.danger]].name} {bossReady(s) ? "(−15⚡)" : "✓"}</button>}
-          {!atCamp && <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "rest", "🏕️ Puhkad välitingimustes"))}>🏕️ Puhka siin (1m)</button>}
           {atCamp && !!s.structures.hospital && <button disabled={busy} className="px-btn" title="2 ravimtaime + 1 riie" onClick={() => mut((g) => startAction(g, "heal", "🏨 Ravid end haiglas"))}>🏨 Ravi haiglas ({fmt(durationFor(s, "heal"))})</button>}
           {!atCamp && <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "travel", "🚶 Naased laagrisse", "camp"))}>🏕️ Tagasi laagrisse</button>}
         </div>
-        <p className="mt-1 text-base text-muted-foreground">Võimalikud leiud: {reg.loot.map(([id]) => ITEMS[id].icon).join(" ")}</p>
       </div>
       {hasCompanion(s) && (
         <div className="border-2 border-primary/50 p-2">
           <span className="px-title text-primary">🧒 Väike Tom</span>
           <div className="text-base text-muted-foreground">Tom elab sinu laagris. Kogumine +20% ja võitluses viskab ta vaenlasele kive. Näed teda igal päeval päevikus.</div>
         </div>
-      )}
-      {s.region === "magic" && s.inv.sealer ? (
-        <div className="border-2 border-magic p-3">
-          <div className="px-title text-magic">🌀 LÕHE PITSEERIJA</div>
-          <p className="my-1 text-muted-foreground">See on hetk, kogu see teekond oli selleks. Sulge Lõhe. (Lõpetab loo.)</p>
-          <button className="px-btn px-btn-primary" onClick={() => { if (confirm("Sulge Lõhe igaveseks? See lõpetab loo.")) mut((g) => sealRift(g)); }}>🌀 Pitseeri Lõhe</button>
-        </div>
-      ) : s.region === "magic" && (
-        <p className="text-base text-muted-foreground">💠 Lõhe virvendab siin. Selle sulgemiseks vajad Lõhe Pitseerijat — sepista see laboris Lõhe kildast (sügavustest).</p>
       )}
       <div>
         <H>Baas {atCamp ? "" : "(ehitamine ainult laagris)"}</H>
@@ -375,6 +360,34 @@ function BaseTab({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean }) {
   );
 }
 
+function RegionActions({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean }) {
+  const reg = REGIONS[s.region];
+  const atCamp = s.region === "camp";
+  return (
+    <div className="mb-4 space-y-4">
+      <div>
+        <H>Tegevused: {reg.icon} {reg.name}</H>
+        <div className="flex flex-wrap gap-2">
+          <button disabled={busy} className="px-btn px-btn-primary" onClick={() => mut((g) => startAction(g, "gather", `🔨 Kogud ressursse: ${reg.name}`))}>🪓 Kogu ({fmt(durationFor(s, "gather"))})</button>
+          <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "explore", `🧭 Uurid ümbrust`))}>🧭 Uuri ({fmt(durationFor(s, "explore"))})</button>
+          {s.region === "flooded" && <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "fish", "🎣 Püüd kala"))}>🎣 Püüda ({fmt(durationFor(s, "fish"))})</button>}
+          {reg.danger > 0 && <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "hunt", "🏹 Jahid"))}>🏹 Jahi ({fmt(durationFor(s, "hunt"))})</button>}
+          {reg.danger > 0 && <button disabled={busy || !bossReady(s)} title={bossReady(s) ? "Vajab 15 energiat" : "Alistatud — uus koletis homme"} className="px-btn px-btn-danger" onClick={() => mut((g) => startBoss(g))}>👹 {ENEMIES[MINI_FOR_DANGER[reg.danger]].name} {bossReady(s) ? "(−15⚡)" : "✓"}</button>}
+        </div>
+        <p className="mt-1 text-base text-muted-foreground">Võimalikud leiud: {reg.loot.map(([id]) => ITEMS[id].icon).join(" ")}</p>
+      </div>
+      {s.region === "magic" && s.inv.sealer ? (
+        <div className="border-2 border-magic p-3">
+          <div className="px-title text-magic">🌀 LÕHE PITSEERIJA</div>
+          <p className="my-1 text-muted-foreground">See on hetk, kogu see teekond oli selleks. Sulge Lõhe. (Lõpetab loo.)</p>
+          <button className="px-btn px-btn-primary" onClick={() => { if (confirm("Sulge Lõhe igaveseks? See lõpetab loo.")) mut((g) => sealRift(g)); }}>🌀 Pitseeri Lõhe</button>
+        </div>
+      ) : s.region === "magic" && (
+        <p className="text-base text-muted-foreground">💠 Lõhe virvendab siin. Selle sulgemiseks vajad Lõhe Pitseerijat — sepista see laboris Lõhe kildast (sügavustest).</p>
+      )}    </div>
+  );
+}
+
 // ---------- world map (visual) ----------
 const MAP_POS: Record<string, [number, number]> = {
   camp: [480, 470], forest: [270, 360], ruins: [690, 390], mine: [140, 280],
@@ -389,6 +402,7 @@ function MapTab({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean }) {
   const go = (id: string) => mut((g) => startAction(g, "travel", `🚶 Rändad: ${REGIONS[id].name}`, id));
   return (
     <div>
+      <RegionActions s={s} mut={mut} busy={busy} />
       <H>Maailma kaart</H>
       <svg viewBox="0 0 1020 590" className="w-full" role="img" aria-label="Maailma kaart">
         {Object.values(REGIONS).flatMap((r) => {
