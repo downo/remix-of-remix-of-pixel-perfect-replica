@@ -118,6 +118,7 @@ export const EXPEDITIONS: Expedition[] = ([
   { id: "x_city", name: "Surnud linn", icon: "🏙️", region: "city", stages: 5, danger: 3, loot: [["scrap", 5], ["wire", 3], ["antirad", 1], ["can", 2]], desc: "Pikk ja ohtlik. Hea saak." },
   { id: "x_rift", name: "Lõhe serv", icon: "🌀", region: "depths3", stages: 6, danger: 4.5, loot: [["crystal", 2], ["voidshard", 1], ["ore", 3]], desc: "Kõige ohtlikum retk. Lõpus ootab legendaarne leid." },
 ] as Expedition[]).filter((x) => REGIONS[x.region]);
+export const EXP_GEAR: Record<string, string> = { x_forest: "hideboots", x_ruins: "scraphelm", x_mine: "minerhelm", x_city: "steelboots", x_rift: "voidboots" };
 export const EXP_WEEK_GOAL = 5;
 export const EXP_ENERGY = 8;
 export interface ExpRun { id: string; stage: number; loot: Record<string, number>; log: string[] }
@@ -173,6 +174,7 @@ export function expAdvance(s: GameState): string | null {
   if (r.stage >= x.stages) {
     r.log.push("Jõudsid retke lõppu!");
     giveRelic(s, makeRelic(x.id === "x_rift" ? 0.3 : x.danger * 0.06));
+    const gear = EXP_GEAR[x.id]; if (gear && rnd() < 0.4) { r.loot[gear] = (r.loot[gear] || 0) + 1; r.log.push(`Leidsid varustuse: ${ITEMS[gear]?.icon ?? ""} ${ITEMS[gear]?.name ?? gear}!`); }
     return finishExp(s, true);
   }
   return null;

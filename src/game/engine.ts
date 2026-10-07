@@ -13,7 +13,7 @@ export interface GameState {
   level: number; xp: number;
   skills: Record<SkillId, number>;
   inv: Record<string, number>;
-  equip: { weapon: string | null; armor: string | null; tool: string | null };
+  equip: { weapon: string | null; armor: string | null; head: string | null; boots: string | null; tool: string | null };
   region: string; discovered: string[];
   structures: Record<string, number>;
   action: Action | null;
@@ -51,7 +51,7 @@ export function newGame(now = Date.now()): GameState {
     level: 1, xp: 0,
     skills: { survival: 0, combat: 0, crafting: 0, medicine: 0, exploration: 0, engineering: 0 },
     inv: { knife: 1, rags: 1, can: 1, dirtywater: 2, cloth: 2, wood: 2 },
-    equip: { weapon: "knife", armor: "rags", tool: null },
+    equip: { weapon: "knife", armor: "rags", head: null, boots: null, tool: null },
     region: "camp", discovered: ["camp", "forest", "ruins"],
     structures: {}, action: null, combat: null, event: null,
     log: [{ t: now, type: "lore", text: "Ärkad külma raudteesilla all. Sa ei mäleta, kuidas siia jõudsid. Seljakotis on vaid paar asja. Taevas virvendab roheliselt." }],
@@ -190,7 +190,7 @@ export function weaponDmg(s: GameState) {
   const base = s.equip.weapon ? ITEMS[s.equip.weapon].dmg || 2 : 2;
   return base + skillLevel(s.skills.combat) - 1 + bonus(s).dmg;
 }
-export const armorDef = (s: GameState) => (s.equip.armor ? ITEMS[s.equip.armor].def || 0 : 0) + (petIs(s, "scorpion") ? 2 : 0) + (petMut(s, "tough") ? 1 : 0) + bonus(s).def;
+export const armorDef = (s: GameState) => (["armor", "head", "boots"] as const).reduce((t, k) => t + (s.equip[k] ? ITEMS[s.equip[k]!]?.def || 0 : 0), 0) + (petIs(s, "scorpion") ? 2 : 0) + (petMut(s, "tough") ? 1 : 0) + bonus(s).def;
 const toolBonus = (s: GameState) => (s.equip.tool ? ITEMS[s.equip.tool].gather || 0 : 0);
 
 // ---------- action durations ----------
@@ -514,7 +514,7 @@ export function useItem(s: GameState, id: string) {
 
 export function equipItem(s: GameState, id: string) {
   const it = ITEMS[id];
-  const slot = it.type === "weapon" ? "weapon" : it.type === "armor" ? "armor" : it.type === "tool" ? "tool" : null;
+  const slot = (["weapon", "armor", "head", "boots", "tool"] as const).find((k) => k === it.type) ?? null;
   if (!slot) return;
   s.equip[slot] = id;
   log(s, `Varustasid: ${it.icon} ${it.name}`, "info");
@@ -953,7 +953,7 @@ export function barSell(s: GameState, id: string, lots = 1): string | null {
   const t = BAR_SELL[id]; if (!t) return null;
   if (!atBar(s)) return "Baar on Varemetes.";
   const owned = s.inv[id] || 0;
-  const usable = id === s.equip.weapon || id === s.equip.armor || id === s.equip.tool ? owned - 1 : owned;
+  const usable = Object.values(s.equip).includes(id) ? owned - 1 : owned;
   const n = Math.min(lots, Math.floor(usable / t[0]));
   if (n < 1) return `Vajad vähemalt ${t[0]} tk (varustuses olev ese ei lähe müüki).`;
   add(s, id, -n * t[0]); add(s, "cash", n * t[1]);

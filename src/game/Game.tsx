@@ -28,7 +28,7 @@ const costText = (c: Record<string, number>) => Object.entries(c).map(([k, v]) =
 const fmt = (sec: number) => (sec >= 60 ? `${Math.floor(sec / 60)}m ${sec % 60 ? (sec % 60) + "s" : ""}` : `${sec}s`);
 const TYPE_LABEL: Record<ItemType, string> = {
   resource: "resurss", food: "toit", drink: "jook", medicine: "meditsiin",
-  weapon: "relv", armor: "rüü", tool: "tööriist", rare: "haruldane",
+  weapon: "relv", armor: "rüü", head: "müts", boots: "saapad", tool: "tööriist", rare: "haruldane",
 };
 
 export default function Game() {
@@ -494,7 +494,7 @@ function ItemDetail({ id, s, onClose }: { id: string; s: GameState; onClose: () 
   );
 }
 
-const TYPE_NAMES: Record<string, string> = { "": "Kõik", resource: "Materjal", food: "Toit", drink: "Jook", medicine: "Ravim", weapon: "Relv", armor: "Rüü", tool: "Tööriist", rare: "Haruldane" };
+const TYPE_NAMES: Record<string, string> = { "": "Kõik", resource: "Materjal", food: "Toit", drink: "Jook", medicine: "Ravim", weapon: "Relv", armor: "Rüü", head: "Müts", boots: "Saapad", tool: "Tööriist", rare: "Haruldane" };
 const relicAffixes = (r: Relic) => Object.entries(r.affixes).map(([k, v]) => AFFIX[k as AffixKey].label(v!)).join(", ");
 function InvTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: string) => void }) {
   const [q, setQ] = useState(""); const [type, setType] = useState(""); const [sort, setSort] = useState<"name" | "qty" | "type">("type");
@@ -517,12 +517,12 @@ function InvTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: s
       <div className="grid gap-1 sm:grid-cols-2">
         {items.map(([id, n]) => {
           const it = ITEMS[id];
-          const usable = ["food", "drink", "medicine", "weapon", "armor", "tool"].includes(it.type);
+          const usable = ["food", "drink", "medicine", "weapon", "armor", "head", "boots", "tool"].includes(it.type);
           return (
             <div key={id} className="flex cursor-pointer items-center gap-2 border-2 p-1 hover:border-primary" onClick={() => onDetail(id)}>
               <span className="text-2xl">{it.icon}</span>
               <div className="min-w-0 flex-1"><div>{it.name} <span className="text-accent">×{n}</span></div><div className="truncate text-base text-muted-foreground">{it.desc}</div></div>
-              {usable && <button className="px-btn" onClick={(e) => { e.stopPropagation(); mut((g) => useItem(g, id)); }}>{["weapon", "armor", "tool"].includes(it.type) ? "Varusta" : "Kasuta"}</button>}
+              {usable && <button className="px-btn" onClick={(e) => { e.stopPropagation(); mut((g) => useItem(g, id)); }}>{["weapon", "armor", "head", "boots", "tool"].includes(it.type) ? "Varusta" : "Kasuta"}</button>}
               {chestHere && id !== "cash" && <button className="px-btn" title="Pane kõik kasti" onClick={(e) => { e.stopPropagation(); mut((g) => chestPut(g, id, n)); }}>🧰</button>}
               {id !== "cash" && <button className="px-btn" title="Viska üks ära (Shift = kõik)" aria-label={`Viska ära ${it.name}`} onClick={(e) => { e.stopPropagation(); const all = e.shiftKey || (n > 1 && confirm(`Viska ära kõik ${it.name} ×${n}? (Tühista = ainult 1)`)); mut((g) => dropItem(g, id, all ? n : 1)); }}>🗑️</button>}
             </div>
@@ -559,11 +559,11 @@ function InvTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: s
 }
 
 function GearTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: string) => void }) {
-  const slots = [["weapon", "Relv", "🗡️"], ["armor", "Rüü", "🛡️"], ["tool", "Tööriist", "⛏️"]] as const;
+  const slots = [["head", "Müts", "🧢"], ["weapon", "Relv", "🗡️"], ["armor", "Rüü", "🛡️"], ["boots", "Saapad", "🥾"], ["tool", "Tööriist", "⛏️"]] as const;
   return (
     <div>
       <H>Varustus</H>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {slots.map(([k, l, ic]) => {
           const id = s.equip[k]; const it = id ? ITEMS[id] : null;
           const opts = Object.keys(s.inv).filter((x) => ITEMS[x]?.type === k);
