@@ -7,11 +7,12 @@ import {
 import { OnlineTab, syncOnline, useOnlineUser, fetchCloudSave, ResetPassword, Account } from "./Online";
 import { blip } from "./sound";
 import { BarTab } from "./Bar";
+import { WorldTab } from "./WorldTab";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
 
-type Tab = "today" | "exp" | "base" | "map" | "inv" | "gear" | "craft" | "quests" | "npc" | "pet" | "bar" | "skills" | "ach" | "stats" | "log" | "online" | "settings";
+type Tab = "today" | "exp" | "world" | "base" | "map" | "inv" | "gear" | "craft" | "quests" | "npc" | "pet" | "bar" | "skills" | "ach" | "stats" | "log" | "online" | "settings";
 const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: "today", icon: "☀️", label: "Täna" }, { id: "exp", icon: "🧭", label: "Retked" },
+  { id: "today", icon: "☀️", label: "Täna" }, { id: "exp", icon: "🧭", label: "Retked" }, { id: "world", icon: "🌍", label: "Maailm" },
   { id: "base", icon: "🏠", label: "Baas" }, { id: "map", icon: "🗺️", label: "Kaart" },
   { id: "inv", icon: "🎒", label: "Inventar" }, { id: "gear", icon: "⚔️", label: "Varustus" },
   { id: "craft", icon: "🔨", label: "Crafting" }, { id: "quests", icon: "📖", label: "Ülesanded" },
@@ -171,6 +172,7 @@ export default function Game() {
           <section key={tab} className="fadein px-panel flex-1 p-3">
             {tab === "today" && <TodayTab s={s} go={setTab} />}
             {tab === "exp" && <ExpTab s={s} mut={mut} />}
+            {tab === "world" && <WorldTab s={s} mut={mut} onNgp={(g) => { ref.current = g; save(g); setS({ ...g }); setTab("today"); }} />}
             {tab === "base" && <BaseTab s={s} mut={mut} busy={busy} />}
             {tab === "map" && <MapTab s={s} mut={mut} busy={busy} />}
             {tab === "inv" && <InvTab s={s} mut={mut} onDetail={setDetail} />}

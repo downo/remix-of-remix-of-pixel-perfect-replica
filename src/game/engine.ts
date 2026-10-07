@@ -1,3 +1,4 @@
+import { enemyScale, worldEventFor } from "./world";
 import { bonus, maybeRelic, type ExpRun, type Relic } from "./progress";
 import { BAR_BUY, BAR_REGION, BAR_SELL, CONTRACT_POOL, type Contract, CODEX, PET_KINDS, ENEMIES, EVENTS, ITEMS, LORE, RECIPES, REGIONS, STRUCTURES, type Quest, type SkillId } from "./data";
 
@@ -30,6 +31,7 @@ export interface GameState {
   kennel: Pet[]; lastBreed: number; lastRandom: number;
   bar: { day: number; base: Record<string, number>; done: string[] };
   perks: string[]; relics: Relic[]; charm: string | null; exp: ExpRun | null; expWeek: { week: string; n: number; claimed: boolean } | null;
+  rep: Record<string, number>; rankClaimed: Record<string, number[]>; donated: Record<string, number>; bond: Record<string, number>; story: Record<string, number>; choices: string[]; seen: string[]; collDone: string[]; ngp: number;
 }
 export interface Pet { kind: string; kind2?: string; name: string; lvl: number; xp: number; fed: number; gen?: number; mut?: string }
 export type StatKey = "gathered" | "crafted" | "built" | "traveled" | "fished" | "explored" | "raids" | "bosses";
@@ -54,6 +56,7 @@ export function newGame(now = Date.now()): GameState {
     stats: emptyStats(), daily: { day: 0, base: {}, claimed: [] }, wk: { week: "", base: 0 }, pet: null, codex: [], kennel: [], lastBreed: 0, lastRandom: now, bar: { day: 0, base: {}, done: [] },
     damaged: {}, bossDay: {}, trophies: {}, bountyWeek: "",
     perks: [], relics: [], charm: null, exp: null, expWeek: null,
+    rep: {}, rankClaimed: {}, donated: {}, bond: {}, story: {}, choices: [], seen: [], collDone: [], ngp: 0,
   };
 }
 
@@ -113,13 +116,14 @@ function log(s: GameState, text: string, type: LogType = "info") {
 }
 export function add(s: GameState, id: string, n: number) {
   s.inv[id] = (s.inv[id] || 0) + n;
+  if (n > 0 && s.seen && !s.seen.includes(id)) s.seen.push(id);
   if (s.inv[id] <= 0) delete s.inv[id];
 }
 export const has = (s: GameState, cost: Record<string, number>) => Object.entries(cost).every(([k, v]) => (s.inv[k] || 0) >= v);
 const pay = (s: GameState, cost: Record<string, number>) => Object.entries(cost).forEach(([k, v]) => add(s, k, -v));
 
 export function gainXp(s: GameState, n: number, skill?: SkillId) {
-  n = Math.round(n * (1 + bonus(s).xp));
+  n = Math.round(n * (1 + bonus(s).xp + worldEventFor(s).xp));
   s.xp += n;
   if (skill) s.skills[skill] += n;
   while (s.xp >= xpForLevel(s.level)) {
@@ -216,7 +220,7 @@ function finishAction(s: GameState) {
       if (hasCompanion(s)) mult *= 1.2;
       if (petIs(s, "ratdog")) mult *= 1.15;
       if (petMut(s, "lucky")) mult *= 1.1;
-      mult *= 1 + bonus(s).gather;
+      mult *= Math.max(0.1, 1 + bonus(s).gather + worldEventFor(s).gather);
       { const se = seasonFor(s).id; if (se === "autumn") mult *= 1.2; }
       const got = rollLoot(s, reg.loot, mult);
       if (weatherFor(s).id === "crystal" && rnd() < 0.25) { add(s, "crystal", 1); got.push("💎 Kristall ×1 (tuul)"); }
@@ -330,7 +334,7 @@ export function startCombat(s: GameState, forced?: string) {
   const id = forced || pool[Math.floor(rnd() * pool.length)];
   if (!id) return;
   const e = ENEMIES[id];
-  s.combat = { enemy: id, hp: e.hp, defending: false };
+  s.combat = { enemy: id, hp: Math.round(e.hp * enemyScale(s)), defending: false };
   log(s, `☠️ ${e.icon} ${e.name.toUpperCase()} ilmub! ${e.desc}`, "bad");
 }
 
@@ -434,7 +438,7 @@ export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "fl
   // enemy turn
   if (mini) nextIntent(s);
   if (skipEnemy) return;
-  const raw = Math.round(e.dmg * (0.7 + rnd() * 0.6) * mult);
+  const raw = Math.round(e.dmg * enemyScale(s) * (0.7 + rnd() * 0.6) * mult);
   const taken = Math.max(0, Math.round((raw - armorDef(s)) * (s.combat.defending ? 0.4 : 1)));
   s.hp -= taken;
   log(s, `${e.icon} ${e.name} ründab: −${taken} HP.`, "bad");
@@ -949,7 +953,7 @@ export function loadSave(): GameState | null {
 export function migrateSave(p: Partial<GameState>): GameState {
   {
     const base = newGame();
-    return { ...base, ...p, skills: { ...base.skills, ...p.skills }, equip: { ...base.equip, ...p.equip }, stats: { ...base.stats, ...p.stats }, daily: p.daily ?? base.daily, wk: p.wk ?? base.wk, pet: p.pet ?? null, codex: p.codex ?? [], kennel: p.kennel ?? [], lastBreed: p.lastBreed ?? 0, bar: p.bar ?? base.bar, damaged: p.damaged ?? {}, bossDay: p.bossDay ?? {}, trophies: p.trophies ?? {}, bountyWeek: p.bountyWeek ?? "", perks: p.perks ?? [], relics: p.relics ?? [], charm: p.charm ?? null, exp: p.exp ?? null, expWeek: p.expWeek ?? null };
+    return { ...base, ...p, skills: { ...base.skills, ...p.skills }, equip: { ...base.equip, ...p.equip }, stats: { ...base.stats, ...p.stats }, daily: p.daily ?? base.daily, wk: p.wk ?? base.wk, pet: p.pet ?? null, codex: p.codex ?? [], kennel: p.kennel ?? [], lastBreed: p.lastBreed ?? 0, bar: p.bar ?? base.bar, damaged: p.damaged ?? {}, bossDay: p.bossDay ?? {}, trophies: p.trophies ?? {}, bountyWeek: p.bountyWeek ?? "", perks: p.perks ?? [], relics: p.relics ?? [], charm: p.charm ?? null, exp: p.exp ?? null, expWeek: p.expWeek ?? null, rep: p.rep ?? {}, rankClaimed: p.rankClaimed ?? {}, donated: p.donated ?? {}, bond: p.bond ?? {}, story: p.story ?? {}, choices: p.choices ?? [], seen: p.seen ?? Object.keys(p.inv ?? {}), collDone: p.collDone ?? [], ngp: p.ngp ?? 0 };
   }
 }
 export function wipe() { localStorage.removeItem(KEY); }
