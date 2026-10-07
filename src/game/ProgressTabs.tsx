@@ -6,6 +6,7 @@ import {
 } from "./progress";
 import { PARDI_JUTUD } from "./tekstid";
 import { WorldEventLine } from "./WorldTab";
+import { REGION_IMG } from "./portraits";
 import { PathPanel } from "./LoreTabs";
 
 type Mut = (fn: (g: GameState) => string | null | void) => void;
@@ -60,6 +61,7 @@ export function ExpTab({ s, mut }: { s: GameState; mut: Mut }) {
   if (run && x) return (
     <div>
       <H>{x.icon} {x.name} — etapp {run.stage}/{x.stages}</H>
+      {REGION_IMG[x.id] && <img src={REGION_IMG[x.id]} alt={x.name} className="mb-2 max-h-48 w-full border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
       <div className="px-bar my-2 text-primary"><span style={{ width: `${(run.stage / x.stages) * 100}%` }} /></div>
       <p className="mb-2 text-muted-foreground">❤️ {s.hp}/{s.maxHp} · ⚡ {Math.round(s.energy)} · ☢️ {Math.round(s.rad)}. Mida sügavamale, seda suurem saak — ja oht. Kui HP otsa saab, kaotad kogu retke saagi.</p>
       <p className="mb-2">Kaasas: {Object.entries(run.loot).map(([k, v]) => `${ITEMS[k]?.icon ?? ""}×${v}`).join(" ") || "—"}</p>
@@ -81,6 +83,7 @@ export function ExpTab({ s, mut }: { s: GameState; mut: Mut }) {
       <div className="grid gap-2 sm:grid-cols-2">
         {EXPEDITIONS.map((e) => { const ok = expAvailable(s, e); return (
           <div key={e.id} className={`border-2 p-2 ${ok ? "" : "opacity-50"}`}>
+            {REGION_IMG[e.id] && <img src={REGION_IMG[e.id]} alt={e.name} loading="lazy" className="mb-1 max-h-32 w-full border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
             <div className="flex justify-between"><span>{e.icon} {e.name}</span><span className="text-accent">{"☠".repeat(Math.ceil(e.danger))}</span></div>
             <div className="text-base text-muted-foreground">{e.desc} {e.stages} etappi · {REGIONS[e.region].icon} {REGIONS[e.region].name}</div>
             <div className="text-base">Saak: {e.loot.map(([k]) => ITEMS[k]?.icon ?? "").join(" ")}</div>
