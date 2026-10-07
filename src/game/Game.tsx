@@ -8,6 +8,7 @@ import { OnlineTab, syncOnline, useOnlineUser, fetchCloudSave, ResetPassword, Ac
 import { blip } from "./sound";
 import { BarTab } from "./Bar";
 import { WorldTab } from "./WorldTab";
+import { StoryQuests } from "./StoryQuests";
 import { Knowledge } from "./LoreTabs";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
 
@@ -591,6 +592,7 @@ function QuestTab({ s, mut }: { s: GameState; mut: Mut }) {
         })}
       </ul>
       <p className="mb-3 text-base text-muted-foreground">🗓️ Nädala väljakutse: {wk.icon} {wk.name} — sinu panus {weeklyContribution(s)}. Vaata kogu kogukonna edenemist: 🌐 Mitmikmäng → Nädal.</p>
+      <StoryQuests s={s} mut={mut} />
       <H>Ülesanded</H>
       <ul className="space-y-1">
         {QUESTS.map((q) => { const d = q.done(s); return (
@@ -911,11 +913,9 @@ function Ending({ s, onClose }: { s: GameState; onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4" onClick={onClose}>
       <div className="px-panel fadein max-w-lg w-full border-magic p-5 text-center" onClick={(e) => e.stopPropagation()}>
         <div className="px-title endglow text-magic">🌍 MAAILM PITSEERITUD</div>
-        <p className="my-3">
-          Pitseerija toimis. Lõhe sulgus — taevas paranes ja roheline virvendus kadus.
-          Keegi ei tea, mis teisel pool oli. Kuid sa tead, kes selle kinni tegi.
-          Settlersid hakkavad sind nimetama Pitseerijaks.
-        </p>
+        <p className="my-3">Pitseerija toimis. Lõhe sulgus — taevas paranes ja roheline virvendus kadus.</p>
+        <div className="px-title text-accent">{ENDINGS[s.ending || "settlers"].title}</div>
+        <p className="my-3">{ENDINGS[s.ending || "settlers"].text}</p>
         <div className="grid grid-cols-2 gap-2 text-left text-base sm:grid-cols-3">
           <div className="border-2 p-2">📅 Päev {clock(s).day}</div>
           <div className="border-2 p-2">⭐ Tase {s.level}</div>
