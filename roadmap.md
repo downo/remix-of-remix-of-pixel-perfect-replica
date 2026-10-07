@@ -16,3 +16,8 @@ User picked (all options): story ending + boss, achievements, companion (Väike 
 - [x] Compass/minimap in region panel
 - [x] Pets (tame weakened mutts), crafting tree view, KOIDIK codex fragments
 - [x] Bar (shop, sell junk, contracts, 4 minigames, caps currency), player request board, kennel + pet breeding
+
+# TUHK 2.0 (user plan, first wave)
+- [x] Expeditions (multi-stage, retreat/push, weekly goal)
+- [x] Perk tree (3 branches) + relics with random affixes
+- [x] "Täna" overview screen
