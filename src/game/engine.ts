@@ -1,3 +1,4 @@
+import { bonus, maybeRelic, type ExpRun, type Relic } from "./progress";
 import { BAR_BUY, BAR_REGION, BAR_SELL, CONTRACT_POOL, type Contract, CODEX, PET_KINDS, ENEMIES, EVENTS, ITEMS, LORE, RECIPES, REGIONS, STRUCTURES, type Quest, type SkillId } from "./data";
 
 export type LogType = "info" | "good" | "bad" | "loot" | "lore" | "combat";
@@ -28,6 +29,7 @@ export interface GameState {
   codex: string[];
   kennel: Pet[]; lastBreed: number; lastRandom: number;
   bar: { day: number; base: Record<string, number>; done: string[] };
+  perks: string[]; relics: Relic[]; charm: string | null; exp: ExpRun | null; expWeek: { week: string; n: number; claimed: boolean } | null;
 }
 export interface Pet { kind: string; kind2?: string; name: string; lvl: number; xp: number; fed: number; gen?: number; mut?: string }
 export type StatKey = "gathered" | "crafted" | "built" | "traveled" | "fished" | "explored" | "raids" | "bosses";
@@ -51,6 +53,7 @@ export function newGame(now = Date.now()): GameState {
     ach: [], tut: false, sealed: false, seenEnding: false, tomDay: 0, warn: [], lastDeath: null,
     stats: emptyStats(), daily: { day: 0, base: {}, claimed: [] }, wk: { week: "", base: 0 }, pet: null, codex: [], kennel: [], lastBreed: 0, lastRandom: now, bar: { day: 0, base: {}, done: [] },
     damaged: {}, bossDay: {}, trophies: {}, bountyWeek: "",
+    perks: [], relics: [], charm: null, exp: null, expWeek: null,
   };
 }
 
@@ -104,6 +107,7 @@ export const WEATHER_FX: Record<string, string> = {
   crystal: "Kristallituul: kogudes võid leida kristalle.",
 };
 
+export { log as gameLog };
 function log(s: GameState, text: string, type: LogType = "info") {
   s.log = [{ t: Date.now(), text, type }, ...s.log].slice(0, 120);
 }
@@ -114,7 +118,8 @@ export function add(s: GameState, id: string, n: number) {
 export const has = (s: GameState, cost: Record<string, number>) => Object.entries(cost).every(([k, v]) => (s.inv[k] || 0) >= v);
 const pay = (s: GameState, cost: Record<string, number>) => Object.entries(cost).forEach(([k, v]) => add(s, k, -v));
 
-function gainXp(s: GameState, n: number, skill?: SkillId) {
+export function gainXp(s: GameState, n: number, skill?: SkillId) {
+  n = Math.round(n * (1 + bonus(s).xp));
   s.xp += n;
   if (skill) s.skills[skill] += n;
   while (s.xp >= xpForLevel(s.level)) {
@@ -141,9 +146,9 @@ export const petIs = (s: GameState, k: string) => !!s.pet && (s.pet.kind === k |
 
 export function weaponDmg(s: GameState) {
   const base = s.equip.weapon ? ITEMS[s.equip.weapon].dmg || 2 : 2;
-  return base + skillLevel(s.skills.combat) - 1;
+  return base + skillLevel(s.skills.combat) - 1 + bonus(s).dmg;
 }
-export const armorDef = (s: GameState) => (s.equip.armor ? ITEMS[s.equip.armor].def || 0 : 0) + (petIs(s, "scorpion") ? 2 : 0) + (petMut(s, "tough") ? 1 : 0);
+export const armorDef = (s: GameState) => (s.equip.armor ? ITEMS[s.equip.armor].def || 0 : 0) + (petIs(s, "scorpion") ? 2 : 0) + (petMut(s, "tough") ? 1 : 0) + bonus(s).def;
 const toolBonus = (s: GameState) => (s.equip.tool ? ITEMS[s.equip.tool].gather || 0 : 0);
 
 // ---------- action durations ----------
@@ -164,7 +169,7 @@ export function durationFor(s: GameState, kind: Action["kind"], target?: string)
 }
 
 export function canStart(s: GameState) {
-  return !s.action && !s.combat && !s.event && s.hp > 0;
+  return !s.action && !s.combat && !s.event && !s.exp && s.hp > 0;
 }
 
 export const HOSPITAL_COST: Record<string, number> = { herb: 2, cloth: 1 };
@@ -211,6 +216,7 @@ function finishAction(s: GameState) {
       if (hasCompanion(s)) mult *= 1.2;
       if (petIs(s, "ratdog")) mult *= 1.15;
       if (petMut(s, "lucky")) mult *= 1.1;
+      mult *= 1 + bonus(s).gather;
       { const se = seasonFor(s).id; if (se === "autumn") mult *= 1.2; }
       const got = rollLoot(s, reg.loot, mult);
       if (weatherFor(s).id === "crystal" && rnd() < 0.25) { add(s, "crystal", 1); got.push("💎 Kristall ×1 (tuul)"); }
@@ -229,6 +235,7 @@ function finishAction(s: GameState) {
     case "explore": {
       gainXp(s, 8 + reg.danger * 3, "exploration");
       s.stats.explored++;
+      if (reg.danger > 0) maybeRelic(s, 0.04 + reg.danger * 0.01);
       const frag = CODEX.find((f) => f.region === s.region && !s.codex.includes(f.id));
       if (frag && rnd() < 0.3) { s.codex.push(frag.id); log(s, `📼 KOIDIKU FRAGMENT: «${frag.title}» — ${frag.text}`, "lore"); gainXp(s, 20, "exploration"); if (s.codex.length === CODEX.length) log(s, "🔓 Kõik Koidiku fragmendid on koos. Ava Ülesanded → Koidiku arhiiv.", "lore"); break; }
       const expl = skillLevel(s.skills.exploration);
@@ -420,6 +427,8 @@ export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "fl
     if (e.id === "wraith" && !s.npcs.includes("__wraith")) { s.npcs.push("__wraith"); log(s, "🌀 Lõhe sulgub su silme all. Maailm hingab välja. Tulevik on nüüd sinu otsustada.", "lore"); }
     if (e.id === "heart" && !s.npcs.includes("__heart")) { s.npcs.push("__heart"); log(s, "💠 Lõhe Süda laguneb tuhandeteks kildadeks. Üks neist jääb su käte vahele — veel soe.", "lore"); }
     if (s.pet) petXp(s, 3);
+    { const h = bonus(s).heal; if (h) s.hp = Math.min(s.maxHp, s.hp + h); }
+    maybeRelic(s, mini ? 0.6 : 0.05, mini ? 0.15 : 0);
     s.kills++; s.combat = null; return;
   }
   // enemy turn
@@ -940,7 +949,7 @@ export function loadSave(): GameState | null {
 export function migrateSave(p: Partial<GameState>): GameState {
   {
     const base = newGame();
-    return { ...base, ...p, skills: { ...base.skills, ...p.skills }, equip: { ...base.equip, ...p.equip }, stats: { ...base.stats, ...p.stats }, daily: p.daily ?? base.daily, wk: p.wk ?? base.wk, pet: p.pet ?? null, codex: p.codex ?? [], kennel: p.kennel ?? [], lastBreed: p.lastBreed ?? 0, bar: p.bar ?? base.bar, damaged: p.damaged ?? {}, bossDay: p.bossDay ?? {}, trophies: p.trophies ?? {}, bountyWeek: p.bountyWeek ?? "" };
+    return { ...base, ...p, skills: { ...base.skills, ...p.skills }, equip: { ...base.equip, ...p.equip }, stats: { ...base.stats, ...p.stats }, daily: p.daily ?? base.daily, wk: p.wk ?? base.wk, pet: p.pet ?? null, codex: p.codex ?? [], kennel: p.kennel ?? [], lastBreed: p.lastBreed ?? 0, bar: p.bar ?? base.bar, damaged: p.damaged ?? {}, bossDay: p.bossDay ?? {}, trophies: p.trophies ?? {}, bountyWeek: p.bountyWeek ?? "", perks: p.perks ?? [], relics: p.relics ?? [], charm: p.charm ?? null, exp: p.exp ?? null, expWeek: p.expWeek ?? null };
   }
 }
 export function wipe() { localStorage.removeItem(KEY); }

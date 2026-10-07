@@ -7,9 +7,11 @@ import {
 import { OnlineTab, syncOnline, useOnlineUser, fetchCloudSave, ResetPassword, Account } from "./Online";
 import { blip } from "./sound";
 import { BarTab } from "./Bar";
+import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
 
-type Tab = "base" | "map" | "inv" | "gear" | "craft" | "quests" | "npc" | "pet" | "bar" | "skills" | "ach" | "stats" | "log" | "online" | "settings";
+type Tab = "today" | "exp" | "base" | "map" | "inv" | "gear" | "craft" | "quests" | "npc" | "pet" | "bar" | "skills" | "ach" | "stats" | "log" | "online" | "settings";
 const TABS: { id: Tab; icon: string; label: string }[] = [
+  { id: "today", icon: "☀️", label: "Täna" }, { id: "exp", icon: "🧭", label: "Retked" },
   { id: "base", icon: "🏠", label: "Baas" }, { id: "map", icon: "🗺️", label: "Kaart" },
   { id: "inv", icon: "🎒", label: "Inventar" }, { id: "gear", icon: "⚔️", label: "Varustus" },
   { id: "craft", icon: "🔨", label: "Crafting" }, { id: "quests", icon: "📖", label: "Ülesanded" },
@@ -27,7 +29,7 @@ const TYPE_LABEL: Record<ItemType, string> = {
 
 export default function Game() {
   const [s, setS] = useState<GameState | null>(null);
-  const [tab, setTab] = useState<Tab>("base");
+  const [tab, setTab] = useState<Tab>("today");
   const [toast, setToast] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
   const [, force] = useState(0);
@@ -167,6 +169,8 @@ export default function Game() {
           {toast && <div className="px-panel shake border-destructive px-3 py-2 text-destructive">⚠ {toast}</div>}
 
           <section key={tab} className="fadein px-panel flex-1 p-3">
+            {tab === "today" && <TodayTab s={s} go={setTab} />}
+            {tab === "exp" && <ExpTab s={s} mut={mut} />}
             {tab === "base" && <BaseTab s={s} mut={mut} busy={busy} />}
             {tab === "map" && <MapTab s={s} mut={mut} busy={busy} />}
             {tab === "inv" && <InvTab s={s} mut={mut} onDetail={setDetail} />}
@@ -176,7 +180,7 @@ export default function Game() {
             {tab === "npc" && <NpcTab s={s} />}
             {tab === "pet" && <PetTab s={s} mut={mut} />}
             {tab === "bar" && <BarTab s={s} mut={mut} user={user} toast={(m) => { setToast(m); setTimeout(() => setToast(null), 3000); }} />}
-            {tab === "skills" && <SkillTab s={s} />}
+            {tab === "skills" && <><PerkAndRelics s={s} mut={mut} /><SkillTab s={s} /></>}
             {tab === "ach" && <AchTab s={s} />}
             {tab === "stats" && <StatsTab s={s} />}
             {tab === "log" && <LogList s={s} n={120} />}
