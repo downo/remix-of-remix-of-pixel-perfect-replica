@@ -1,0 +1,6 @@
+<FilesMatch "\.(sqlite|sqlite-journal|sqlite-wal|sqlite-shm)$">
+  Require all denied
+</FilesMatch>
+<FilesMatch "^(db|config)\.php$">
+  Require all denied
+</FilesMatch>
