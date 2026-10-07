@@ -88,7 +88,7 @@ function Counter({ s, mut, here }: { s: GameState; mut: Mut; here: boolean }) {
   return (
     <div className="grid gap-3 md:grid-cols-2">
       <div>
-        <h3 className="mb-1 text-accent">Osta</h3>
+        <h3 className="mb-1 bar-tan">Osta</h3>
         <ul className="space-y-1">
           {Object.entries(BAR_BUY).map(([id, p]) => (
             <li key={id} className="px-row">
@@ -102,7 +102,7 @@ function Counter({ s, mut, here }: { s: GameState; mut: Mut; here: boolean }) {
         </ul>
       </div>
       <div>
-        <h3 className="mb-1 text-accent">Müü romu</h3>
+        <h3 className="mb-1 bar-tan">Müü romu</h3>
         {!sellable.length && <p className="text-base text-muted-foreground">Sul pole midagi, mida Pärt ostaks.</p>}
         <ul className="space-y-1">
           {sellable.map((id) => { const [u, p] = BAR_SELL[id]; return (
@@ -170,7 +170,7 @@ function Games({ s, mut, here }: { s: GameState; mut: Mut; here: boolean }) {
 }
 
 const Box = ({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) => (
-  <div className="border-2 p-2"><div className="text-accent">{title}</div><div className="mb-2 text-base text-muted-foreground">{desc}</div>{children}</div>
+  <div className="border-2 p-2" style={{ borderColor: "color-mix(in oklab, var(--ember-tan) 25%, transparent)", background: "var(--soot)" }}><div className="bar-ember">{title}</div><div className="mb-2 text-base text-muted-foreground">{desc}</div>{children}</div>
 );
 const FACES = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 
