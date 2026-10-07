@@ -94,6 +94,8 @@ export function ExpTab({ s, mut }: { s: GameState; mut: Mut }) {
   );
 }
 
+const BRANCH_COLOR: Record<string, string> = { fighter: "#ef4444", scav: "#ec4899", wander: "#f59e0b", surv: "#10b981" };
+
 export function PerkAndRelics({ s, mut }: { s: GameState; mut: Mut }) {
   const b = bonus(s);
   return (
