@@ -8,6 +8,7 @@ import { OnlineTab, syncOnline, useOnlineUser, fetchCloudSave, ResetPassword, Ac
 import { blip } from "./sound";
 import { BarTab } from "./Bar";
 import { WorldTab } from "./WorldTab";
+import { Knowledge } from "./LoreTabs";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
 
 type Tab = "today" | "exp" | "world" | "base" | "map" | "inv" | "gear" | "craft" | "quests" | "npc" | "pet" | "bar" | "skills" | "ach" | "stats" | "log" | "online" | "settings";
@@ -170,7 +171,7 @@ export default function Game() {
           {toast && <div className="px-panel shake border-destructive px-3 py-2 text-destructive">⚠ {toast}</div>}
 
           <section key={tab} className="fadein px-panel flex-1 p-3">
-            {tab === "today" && <TodayTab s={s} go={setTab} />}
+            {tab === "today" && <TodayTab s={s} mut={mut} go={setTab} />}
             {tab === "exp" && <ExpTab s={s} mut={mut} />}
             {tab === "world" && <WorldTab s={s} mut={mut} onNgp={(g) => { ref.current = g; save(g); setS({ ...g }); setTab("today"); }} />}
             {tab === "base" && <BaseTab s={s} mut={mut} busy={busy} />}
@@ -185,7 +186,7 @@ export default function Game() {
             {tab === "skills" && <><PerkAndRelics s={s} mut={mut} /><SkillTab s={s} /></>}
             {tab === "ach" && <AchTab s={s} />}
             {tab === "stats" && <StatsTab s={s} />}
-            {tab === "log" && <LogList s={s} n={120} />}
+            {tab === "log" && <><Knowledge s={s} /><LogList s={s} n={120} /></>}
             {tab === "online" && <OnlineTab s={s} mut={mut} user={user} toast={(m) => { setToast(m); setTimeout(() => setToast(null), 3000); }} onLoadCloud={(g) => { ref.current = g; save(g); setS({ ...g }); }} />}
             {tab === "settings" && <Settings mut={mut} onToast={(t) => { setToast(t); setTimeout(() => setToast(null), 2000); }} setS={(g) => { ref.current = g; save(g); setS({ ...g }); }} />}
           </section>
@@ -283,7 +284,7 @@ function H({ children }: { children: React.ReactNode }) { return <h2 className="
 
 // ---------- tutorial ----------
 const TUT_STEPS: { label: string; done: (s: GameState) => boolean }[] = [
-  { label: "Kogu ressursse (🪓 Kogu), kuni sul on 3 puitu", done: (s) => (s.inv.wood || 0) >= 3 },
+  { label: "Kogu ressursse (Kaart → 🪓 Kogu), kuni sul on 3 puitu", done: (s) => (s.inv.wood || 0) >= 3 },
   { label: "Ehita lõkkeplats (Baas → ehitamine)", done: (s) => !!s.structures.campfire },
   { label: "Valmista kivikirves ja varusta see (Crafting → Varustus)", done: (s) => s.equip.tool !== null },
   { label: "Ehita varjualune, et öösel turvaliselt puhata", done: (s) => !!s.structures.shelter },
