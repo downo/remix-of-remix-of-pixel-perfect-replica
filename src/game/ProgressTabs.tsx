@@ -2,7 +2,7 @@ import { ITEMS, REGIONS } from "./data";
 import { clock, dailyFor, dailyProgress, QUESTS, seasonFor, weatherFor, weeklyContribution, weeklyFor, type GameState } from "./engine";
 import {
   AFFIX, BRANCHES, EXPEDITIONS, EXP_ENERGY, EXP_WEEK_GOAL, PERKS, RARITY, bonus, claimExpWeek, expAdvance, expAvailable, expRetreat, expWeekCount,
-  hasPerk, learnPerk, perkBlocked, perkPoints, relicName, scrapRelic, startExpedition, wearRelic, type AffixKey, type Relic,
+  hasPerk, learnPerk, perkCost, perkBlocked, perkPoints, relicName, scrapRelic, startExpedition, wearRelic, type AffixKey, type Relic,
 } from "./progress";
 import { PARDI_JUTUD } from "./tekstid";
 import { WorldEventLine } from "./WorldTab";
@@ -99,15 +99,15 @@ export function PerkAndRelics({ s, mut }: { s: GameState; mut: Mut }) {
   return (
     <div>
       <H>Oskuspuu — vabu punkte: {perkPoints(s)}</H>
-      <p className="mb-2 text-base text-muted-foreground">Iga tasemetõus annab ühe punkti. Vali, milline ellujääja sinust saab.</p>
-      <div className="mb-3 grid gap-2 sm:grid-cols-3">
+      <p className="mb-2 text-base text-muted-foreground">Iga teine tase annab ühe punkti. Kõrgemad oskused maksavad rohkem (1–3 punkti). Kõike ei jõua — vali, milline ellujääja sinust saab.</p>
+      <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {BRANCHES.map((br) => (
           <div key={br.id} className="border-2 p-2">
             <div className="mb-1 text-accent">{br.icon} {br.name}</div>
             {PERKS.filter((p) => p.branch === br.id).map((p) => { const got = hasPerk(s, p.id); const why = perkBlocked(s, p); return (
               <div key={p.id} className={`mb-1 border-l-2 pl-2 ${got ? "border-primary" : ""}`}>
                 <div>{p.icon} {p.name} {got && <span className="text-primary">[✓]</span>}</div>
-                <div className="text-base text-muted-foreground">{p.desc} (tase {p.minLevel})</div>
+                <div className="text-base text-muted-foreground">{p.desc} (tase {p.minLevel} · {perkCost(p)} p)</div>
                 {!got && <button disabled={!!why} title={why ?? ""} className="px-btn mt-1" onClick={() => mut((g) => learnPerk(g, p.id))}>Õpi</button>}
               </div>); })}
           </div>
