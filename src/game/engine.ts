@@ -35,6 +35,7 @@ export interface GameState {
   rep: Record<string, number>; rankClaimed: Record<string, number[]>; donated: Record<string, number>; bond: Record<string, number>; story: Record<string, number>; choices: string[]; seen: string[]; collDone: string[]; ngp: number;
   terr: string[]; sea: { key: string; base: number } | null; seaClaimed: string;
   path: { n: number; last: string } | null; secrets: string[]; hints: string[];
+  qs?: Record<string, number>; qd?: Record<string, number>; ending?: string;
 }
 export interface Pet { kind: string; kind2?: string; name: string; lvl: number; xp: number; fed: number; gen?: number; mut?: string }
 export type StatKey = "gathered" | "crafted" | "built" | "traveled" | "fished" | "explored" | "raids" | "bosses";
@@ -694,11 +695,21 @@ export function sealRift(s: GameState): string | null {
   if (!s.inv.sealer) return "Vajad Lõhe Pitseerijat (sepista laboris Lõhe kildast).";
   if (s.combat || s.action || s.event) return "Pole praegu sobiv hetk.";
   add(s, "sealer", -1);
-  s.sealed = true; s.seenEnding = false;
+  s.sealed = true; s.seenEnding = false; s.ending = pickEnding(s);
   log(s, "🌀 Pitseerija sumiseb, tõuseb õhku ja LÕHE SULGUB. Taevas paraneb. Maailm on päästetud — ja sina oled see, kes selle ära tegi.", "lore");
   gainXp(s, 300);
   checkAch(s);
   return null;
+}
+
+/** Three endings: the faction you stood closest to shapes the new world. */
+export const ENDINGS: Record<string, { title: string; text: string }> = {
+  settlers: { title: "🏘️ UUS KOIDIK", text: "Asunikud ehitavad Lõhe varemetele linna. Sinu nimi raiutakse esimese maja uksepiidale. Inimesed jäävad paigale — ja hakkavad jälle unistama." },
+  wanderers: { title: "🐫 VABA TUUL", text: "Rändurid viivad sõnumi kõigisse varemetesse: taevas on puhas. Keegi ei valitse, keegi ei käsi. Sina kaod koos karavaniga silmapiiri taha." },
+  order: { title: "🔆 ORDU VALGUS", text: "Koidiku Ordu hoiab Pitseerija saladust. Nad lubavad, et teist Lõhet ei tule — aga nende tornides põlevad tuled kogu öö. Kas see oli õige valik?" },
+};
+export function pickEnding(s: GameState) {
+  const r = s.rep || {}; return (["settlers", "wanderers", "order"] as const).reduce((a, b) => ((r[b] || 0) > (r[a] || 0) ? b : a), "settlers");
 }
 
 // ---------- base defense ----------
@@ -855,6 +866,18 @@ const RANDOM_EVENTS: { w: number; good: boolean; run: (s: GameState) => string }
   { w: 2, good: true, run: (s) => { s.energy = clamp(s.energy + 20, 0, 100); return "🎶 Kauge raadio mängis vana laulu. Tunned end värskemana (+20 energiat)."; } },
   { w: 2, good: false, run: (s) => { const it = ["wood", "stone", "scrap", "cloth"].find((k) => (s.inv[k] || 0) > 1); if (!it) return "🦝 Keegi sobras su asjades, aga ei leidnud midagi. Ha!"; add(s, it, -1); return `🦝 Mutantpesukaru varastas ühe ${ITEMS[it].name}.`; } },
   { w: 1, good: false, run: (s) => { s.rad = clamp(s.rad + 8, 0, 100); return "☢️ Kiirgustuul puhus üle. Kiirgus +8."; } },
+  // big events
+  { w: 1, good: true, run: (s) => { add(s, "cash", 25); add(s, "can", 3); add(s, "scrap", 4); return "🚂 RONG TULEB TAGASI! Vana rong vuras rööbastel mööda ja kaotas lasti. Korjasid 25 🪙, konserve ja romu."; } },
+  { w: 1, good: false, run: (s) => { s.rad = clamp(s.rad + 15, 0, 100); s.energy = clamp(s.energy - 15, 0, 100); add(s, "dirtywater", 4); return "🌑 MUST VIHM! Taevast sadas tuhka ja kiirgust (kiirgus +15, energia −15), aga anumad said täis."; } },
+  { w: 1, good: true, run: (s) => { add(s, "crystal", 3); return "💎 KRISTALLÖÖ! Taevast kukkus helendavaid kristalle — said 3."; } },
+  { w: 1, good: true, run: (s) => { add(s, "medkit", 1); add(s, "cloth", 3); add(s, "wood", 4); return "🏚️ HÜLJATUD LAAGER! Leidsid tühja laagri: esmaabikarp, riie ja puit."; } },
+  { w: 1, good: true, run: (s) => { const n = 1 + Math.floor(rnd() * 3); add(s, "bandage", n); gainXp(s, 40); return `📻 SOS! Raadiost kostis appihüüd. Aitasid ellujäänu turvalisse kohta (+40 XP, sidemeid ${n}).`; } },
+  { w: 2, good: false, run: (s) => {
+    const d = REGIONS[s.region].danger;
+    if (!d || s.combat || s.action) return "👣 Kuskil kaugel kõndis midagi suurt. Maa värises.";
+    startCombat(s, MINI_FOR_DANGER[d]); const c = s.combat as GameState["combat"]; if (c) c.intent = "swipe";
+    return "⚠️ VARITSUS! Piirkonna miniboss tuli ise sulle järele!";
+  } },
 ];
 function randomEvent(s: GameState, now: number) {
   if (!s.lastRandom) s.lastRandom = now;
