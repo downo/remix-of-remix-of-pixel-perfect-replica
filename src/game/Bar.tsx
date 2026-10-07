@@ -59,9 +59,12 @@ function Counter({ s, mut, here }: { s: GameState; mut: Mut; here: boolean }) {
         <h3 className="mb-1 text-accent">Osta</h3>
         <ul className="space-y-1">
           {Object.entries(BAR_BUY).map(([id, p]) => (
-            <li key={id} className="flex items-center justify-between gap-2 border-2 p-1 pl-2">
-              <span>{lbl(id)} <span className="text-base text-muted-foreground">(sul {s.inv[id] || 0})</span></span>
-              <button className="px-btn px-btn-primary" disabled={!here || (s.inv.cash || 0) < p} onClick={() => mut((g) => barBuy(g, id))}>🪙 {p}</button>
+            <li key={id} className="px-row">
+              <span className="px-row-main">{lbl(id)} <span className="text-sm text-muted-foreground">(sul {s.inv[id] || 0})</span></span>
+              <span className="px-row-act">
+                <span className="font-bold text-accent">🪙{p}</span>
+                <button className="px-btn" disabled={!here || (s.inv.cash || 0) < p} onClick={() => mut((g) => barBuy(g, id))}>Osta</button>
+              </span>
             </li>
           ))}
         </ul>
@@ -71,9 +74,9 @@ function Counter({ s, mut, here }: { s: GameState; mut: Mut; here: boolean }) {
         {!sellable.length && <p className="text-base text-muted-foreground">Sul pole midagi, mida Pärt ostaks.</p>}
         <ul className="space-y-1">
           {sellable.map((id) => { const [u, p] = BAR_SELL[id]; return (
-            <li key={id} className="flex flex-wrap items-center justify-between gap-2 border-2 p-1 pl-2">
-              <span>{lbl(id)} ×{s.inv[id]} <span className="text-base text-muted-foreground">· {u} tk → 🪙{p}</span></span>
-              <span className="flex gap-1">
+            <li key={id} className="px-row">
+              <span className="px-row-main">{lbl(id)} <span className="text-primary">×{s.inv[id]}</span> <span className="text-sm text-muted-foreground">· {u} tk → 🪙{p}</span></span>
+              <span className="px-row-act">
                 <button className="px-btn" disabled={!here} onClick={() => mut((g) => barSell(g, id, 1))}>Müü</button>
                 <button className="px-btn" disabled={!here} onClick={() => mut((g) => barSell(g, id, 999))}>Kõik</button>
               </span>
@@ -92,7 +95,7 @@ function Jobs({ s, mut, here }: { s: GameState; mut: Mut; here: boolean }) {
         {contractsFor(s.bar.day).map((c) => {
           const p = contractProgress(s, c); const done = s.bar.done.includes(c.id);
           return (
-            <li key={c.id} className={`flex flex-wrap items-center gap-2 border-2 p-2 ${done ? "text-muted-foreground" : ""}`}>
+            <li key={c.id} className={`flex flex-wrap items-center gap-2 px-row ${done ? "text-muted-foreground" : ""}`}>
               <span className="flex-1">{c.icon} {c.name} — {c.kind === "deliver" ? `too ${lbl(c.item!)} ×${c.n}` : `${c.n}×`} <span className="text-accent">{p}/{c.n}</span> <span className="text-base text-muted-foreground">· 🪙{c.cash} +{c.xp} XP</span></span>
               {done ? <span className="text-primary">[✓]</span> : <button className="px-btn px-btn-primary" disabled={!here || p < c.n} onClick={() => mut((g) => claimContract(g, c.id))}>Anna üle</button>}
             </li>

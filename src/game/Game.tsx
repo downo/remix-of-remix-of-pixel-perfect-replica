@@ -624,7 +624,7 @@ function QuestTab({ s, mut }: { s: GameState; mut: Mut }) {
         {dailyFor(s.daily.day).map((q) => {
           const p = Math.min(q.n, dailyProgress(s, q)); const claimed = s.daily.claimed.includes(q.id);
           return (
-            <li key={q.id} className={`flex flex-wrap items-center gap-2 border-2 p-2 ${claimed ? "text-muted-foreground" : ""}`}>
+            <li key={q.id} className={`flex flex-wrap items-center gap-2 px-row ${claimed ? "text-muted-foreground" : ""}`}>
               <span className="flex-1">{q.icon} {q.name} <span className="text-accent">{p}/{q.n}</span> <span className="text-base text-muted-foreground">· {costText(q.reward)} +{q.xp} XP</span></span>
               {claimed ? <span className="text-primary">[✓]</span> : <button disabled={p < q.n} className="px-btn px-btn-primary" onClick={() => mut((g) => claimDaily(g, q.id))}>Võta tasu</button>}
             </li>
@@ -761,7 +761,7 @@ function Kennel({ s, mut }: { s: GameState; mut: Mut }) {
           {s.pet && <button className="px-btn mb-2" onClick={() => mut((g) => kennelStore(g))}>🏠 Pane {s.pet.name} kennelisse</button>}
           <ul className="mb-3 space-y-1">
             {s.kennel.map((p, i) => (
-              <li key={i} className="flex flex-wrap items-center justify-between gap-2 border-2 p-2">
+              <li key={i} className="flex flex-wrap items-center justify-between gap-2 px-row">
                 <span>{petIcon(p)} {p.name} <span className="text-accent">LVL {p.lvl}</span>{p.kind2 && <span className="text-base text-muted-foreground"> · {PET_KINDS[p.kind].name} + {PET_KINDS[p.kind2].name}</span>}</span>
                 <span className="flex gap-1">
                   <button className="px-btn" onClick={() => mut((g) => kennelTake(g, i))}>Võta kaasa</button>

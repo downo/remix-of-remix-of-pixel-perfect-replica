@@ -83,19 +83,26 @@
   }
   .px-title { font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
   .px-btn {
-    font-family: var(--font-term); font-size: 18px;
-    background: var(--secondary); color: var(--secondary-foreground);
-    border: 2px solid var(--border); padding: 4px 10px;
-    box-shadow: inset -2px -2px 0 color-mix(in oklab, var(--background) 60%, transparent), inset 2px 2px 0 color-mix(in oklab, var(--foreground) 10%, transparent);
-    transition: transform .05s, background .1s;
+    font-family: var(--font-term); font-size: 13px; font-weight: 700; line-height: 1;
+    text-transform: uppercase; letter-spacing: 0.02em; white-space: nowrap;
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    min-height: 26px; min-width: 52px; padding: 4px 10px; border-radius: 2px;
+    background: transparent; color: var(--primary);
+    border: 1px solid color-mix(in oklab, var(--primary) 70%, transparent);
+    transition: transform .05s, background .1s, color .1s;
   }
-  .px-btn:hover:not(:disabled) { background: color-mix(in oklab, var(--primary) 18%, var(--secondary)); border-color: var(--primary); color: var(--primary); }
+  .px-btn:hover:not(:disabled) { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
   .px-btn:active:not(:disabled) { transform: translate(1px, 1px); }
-  .px-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .px-btn:disabled { opacity: .35; cursor: not-allowed; color: var(--muted-foreground); border-color: var(--border); background: var(--muted); }
   .px-btn-primary { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
   .px-btn-primary:hover:not(:disabled) { background: color-mix(in oklab, var(--primary) 80%, white); color: var(--primary-foreground); }
   .px-btn-danger { border-color: var(--destructive); color: var(--destructive); }
-  .px-btn-active { border-color: var(--primary); color: var(--primary); background: color-mix(in oklab, var(--primary) 12%, var(--secondary)); }
+  .px-btn-danger:hover:not(:disabled) { background: var(--destructive); color: var(--primary-foreground); border-color: var(--destructive); }
+  .px-btn-active { border-color: var(--primary); color: var(--primary-foreground); background: var(--primary); }
+  .px-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; background: var(--card); border: 1px solid var(--border); }
+  .px-row:hover { border-color: color-mix(in oklab, var(--primary) 45%, var(--border)); }
+  .px-row > .px-row-main { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .px-row > .px-row-act { display: flex; flex-shrink: 0; align-items: center; gap: 6px; }
   .px-bar { height: 10px; background: var(--muted); border: 2px solid var(--border); position: relative; }
   .px-bar > span { position: absolute; inset: 0; right: auto; background-image: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 8px); }
   .glow { text-shadow: 0 0 8px color-mix(in oklab, var(--primary) 60%, transparent); }
