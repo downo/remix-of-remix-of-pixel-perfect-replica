@@ -34,6 +34,8 @@ const TABLES = [
   'profiles'       => ['cols' => ['id','username','score','level','day','updated_at'], 'read' => 'public', 'owner' => 'id', 'pk' => ['id'], 'write' => 'upsert'],
   'saves'          => ['cols' => ['user_id','state','updated_at'], 'read' => 'own', 'owner' => 'user_id', 'pk' => ['user_id'], 'write' => 'upsert'],
   'weekly_contrib' => ['cols' => ['week','user_id','username','amount','updated_at'], 'read' => 'public', 'owner' => 'user_id', 'pk' => ['week','user_id'], 'write' => 'upsert'],
+  'season_contrib' => ['cols' => ['season','user_id','username','amount','updated_at'], 'read' => 'public', 'owner' => 'user_id', 'pk' => ['season','user_id'], 'write' => 'upsert'],
+  'territories'    => ['cols' => ['id','owner','owner_name','captured_at','last_attack_at'], 'read' => 'public'],
   'clans'          => ['cols' => ['id','name','created_by','created_at'], 'read' => 'public'],
   'clan_members'   => ['cols' => ['user_id','clan_id','joined_at'], 'read' => 'public'],
   'clan_stash'     => ['cols' => ['clan_id','item','qty'], 'read' => 'clan'],
@@ -253,6 +255,23 @@ function run_rpc(string $fn, array $a) {
         $st = $pdo->prepare('SELECT name FROM clans WHERE id=?'); $st->execute([$mine]); $an = $st->fetchColumn();
         $pdo->prepare('INSERT INTO clan_wars(id,attacker,defender,attacker_name,defender_name,won,loot,created_at) VALUES (?,?,?,?,?,?,?,?)')->execute([new_id(), $mine, $tg, $an, $dn, $win ? 1 : 0, implode(' ', $got), now()]);
         $r = ['won' => $win, 'loot' => implode(' ', $got)];
+        break;
+      }
+      case 'claim_territory': {
+        $mine = my_clan($uid); $id = (string)($a['_id'] ?? '');
+        if (!$mine) throw new ApiError('Pole klannis');
+        $st = $pdo->prepare('SELECT * FROM territories WHERE id=?'); $st->execute([$id]); $t = $st->fetch();
+        if (!$t) throw new ApiError('Sellist ala pole');
+        if ($t['owner'] === $mine) throw new ApiError('See ala on juba teie oma');
+        if ($t['last_attack_at'] && $t['last_attack_at'] > gmdate('Y-m-d\\TH:i:s\\Z', time() - 1800)) throw new ApiError('Seda ala rünnati hiljuti. Oota pool tundi.');
+        $st = $pdo->prepare('SELECT name FROM clans WHERE id=?'); $st->execute([$mine]); $nm = $st->fetchColumn();
+        $pw = function ($c) use ($pdo) { $st = $pdo->prepare('SELECT COALESCE(SUM(p.score),0) FROM clan_members m JOIN profiles p ON p.id=m.user_id WHERE m.clan_id=?'); $st->execute([$c]); return (float)$st->fetchColumn() + 10; };
+        $rf = fn() => 0.7 + mt_rand() / mt_getrandmax() * 0.6;
+        $st = $pdo->prepare('SELECT 1 FROM clans WHERE id=?'); $st->execute([(string)$t['owner']]);
+        $win = !$t['owner'] || !$st->fetch() || $pw($mine) * $rf() > $pw($t['owner']) * 1.15 * $rf();
+        if ($win) $pdo->prepare('UPDATE territories SET owner=?, owner_name=?, captured_at=?, last_attack_at=? WHERE id=?')->execute([$mine, $nm, now(), now(), $id]);
+        else $pdo->prepare('UPDATE territories SET last_attack_at=? WHERE id=?')->execute([now(), $id]);
+        $r = ['won' => $win];
         break;
       }
       case 'quest_post': {

@@ -156,9 +156,9 @@ export function claimSeason(s: GameState, communityTotal: number): string | null
   ensureSeason(s);
   if (communityTotal < SEASON_GOAL) return "Kogukonna eesmärk pole veel täis.";
   if (seasonContribution(s) < 20) return "Panusta enne ise vähemalt 20 tegevusega.";
-  if (s.seaClaimed === s.sea.key) return "Juba võetud.";
-  s.seaClaimed = s.sea.key;
+  if (s.seaClaimed === s.sea!.key) return "Juba võetud.";
+  s.seaClaimed = s.sea!.key;
   add(s, "cash", 100); gainXp(s, 200); giveRelic(s, makeRelic(0.35));
-  log(s, `${seasonTheme(s.sea.key).icon} Hooaeg võidetud koos! +100 🪙, +200 XP ja hooaja talisman.`, "good");
+  log(s, `${seasonTheme(s.sea!.key).icon} Hooaeg võidetud koos! +100 🪙, +200 XP ja hooaja talisman.`, "good");
   return null;
 }
