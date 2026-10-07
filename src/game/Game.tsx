@@ -12,6 +12,30 @@ import { WorldTab } from "./WorldTab";
 import { StoryQuests } from "./StoryQuests";
 import { Knowledge } from "./LoreTabs";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
+import { Portrait } from "./portraits";
+
+/** Shows a portrait card the moment the player meets a new survivor. */
+function MeetPopup({ s }: { s: GameState }) {
+  const seen = useRef<string[] | null>(null);
+  const [who, setWho] = useState<string | null>(null);
+  useEffect(() => {
+    const now = s.npcs.filter((n) => NPCS[n]);
+    if (seen.current) { const fresh = now.find((n) => !seen.current!.includes(n)); if (fresh) setWho(fresh); }
+    seen.current = now;
+  }, [s.npcs.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!who) return null; const n = NPCS[who];
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4" onClick={() => setWho(null)}>
+      <div className="px-panel fadein flex max-w-md flex-col items-center gap-2 p-4 text-center" onClick={(e) => e.stopPropagation()}>
+        <div className="px-title text-primary">Kohtusid: {n.name}</div>
+        <Portrait id={who} icon={n.icon} alt={n.name} size="lg" />
+        <div className="text-base text-accent">{n.faction}</div>
+        <p className="text-base text-muted-foreground">{n.desc}</p>
+        <button className="px-btn" onClick={() => setWho(null)}>Edasi</button>
+      </div>
+    </div>
+  );
+}
 
 type Tab = "today" | "exp" | "world" | "base" | "map" | "inv" | "gear" | "craft" | "quests" | "npc" | "pet" | "bar" | "skills" | "ach" | "stats" | "log" | "online" | "settings";
 const TABS: { id: Tab; icon: string; label: string }[] = [
@@ -132,6 +156,7 @@ export default function Game() {
       <div className="pointer-events-none fixed right-2 top-2 z-50 flex w-80 max-w-[90vw] flex-col gap-1" aria-live="polite">
         {notes.map((n) => <div key={n.t} className={`px-panel fadein px-3 py-2 text-base ${n.type === "bad" ? "border-destructive text-destructive" : "border-primary text-primary"}`}>{n.text}</div>)}
       </div>
+      <MeetPopup s={s} />
       {/* HUD */}
       <header className="px-panel grid min-w-0 items-center gap-3 px-3 py-2 xl:grid-cols-[minmax(0,1fr)_auto]">
         <div className="min-w-0">
