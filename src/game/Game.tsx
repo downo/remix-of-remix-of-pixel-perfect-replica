@@ -12,6 +12,30 @@ import { WorldTab } from "./WorldTab";
 import { StoryQuests } from "./StoryQuests";
 import { Knowledge } from "./LoreTabs";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
+import { Portrait } from "./portraits";
+
+/** Shows a portrait card the moment the player meets a new survivor. */
+function MeetPopup({ s }: { s: GameState }) {
+  const seen = useRef<string[] | null>(null);
+  const [who, setWho] = useState<string | null>(null);
+  useEffect(() => {
+    const now = s.npcs.filter((n) => NPCS[n]);
+    if (seen.current) { const fresh = now.find((n) => !seen.current!.includes(n)); if (fresh) setWho(fresh); }
+    seen.current = now;
+  }, [s.npcs.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!who) return null; const n = NPCS[who];
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4" onClick={() => setWho(null)}>
+      <div className="px-panel fadein flex max-w-md flex-col items-center gap-2 p-4 text-center" onClick={(e) => e.stopPropagation()}>
+        <div className="px-title text-primary">Kohtusid: {n.name}</div>
+        <Portrait id={who} icon={n.icon} alt={n.name} size="lg" />
+        <div className="text-base text-accent">{n.faction}</div>
+        <p className="text-base text-muted-foreground">{n.desc}</p>
+        <button className="px-btn" onClick={() => setWho(null)}>Edasi</button>
+      </div>
+    </div>
+  );
+}
 
 type Tab = "today" | "exp" | "world" | "base" | "map" | "inv" | "gear" | "craft" | "quests" | "npc" | "pet" | "bar" | "skills" | "ach" | "stats" | "log" | "online" | "settings";
 const TABS: { id: Tab; icon: string; label: string }[] = [
@@ -132,6 +156,7 @@ export default function Game() {
       <div className="pointer-events-none fixed right-2 top-2 z-50 flex w-80 max-w-[90vw] flex-col gap-1" aria-live="polite">
         {notes.map((n) => <div key={n.t} className={`px-panel fadein px-3 py-2 text-base ${n.type === "bad" ? "border-destructive text-destructive" : "border-primary text-primary"}`}>{n.text}</div>)}
       </div>
+      <MeetPopup s={s} />
       {/* HUD */}
       <header className="px-panel grid min-w-0 items-center gap-3 px-3 py-2 xl:grid-cols-[minmax(0,1fr)_auto]">
         <div className="min-w-0">
@@ -767,7 +792,7 @@ function Kennel({ s, mut }: { s: GameState; mut: Mut }) {
           <ul className="mb-3 space-y-1">
             {s.kennel.map((p, i) => (
               <li key={i} className="flex flex-wrap items-center justify-between gap-2 px-row">
-                <span>{petIcon(p)} {p.name} <span className="text-accent">LVL {p.lvl}</span>{p.kind2 && <span className="text-base text-muted-foreground"> · {PET_KINDS[p.kind].name} + {PET_KINDS[p.kind2].name}</span>}</span>
+                <span className="flex items-center gap-2"><Portrait id={p.kind} icon={petIcon(p)} alt={p.name} size="sm" />{p.name} <span className="text-accent">LVL {p.lvl}</span>{p.kind2 && <span className="text-base text-muted-foreground"> · {PET_KINDS[p.kind].name} + {PET_KINDS[p.kind2].name}</span>}</span>
                 <span className="flex gap-1">
                   <button className="px-btn" onClick={() => mut((g) => kennelTake(g, i))}>Võta kaasa</button>
                   <button className="px-btn px-btn-danger" onClick={() => confirm(`Lase ${p.name} vabaks?`) && mut((g) => kennelRelease(g, i))}>✕</button>
@@ -798,7 +823,7 @@ function ActivePet({ s, mut }: { s: GameState; mut: Mut }) {
       <p className="text-muted-foreground">Sul pole veel lemmikut. Nõrgesta võitluses loom alla 35% elust ja vajuta 🐾 Taltsuta (vajad toorest või küpsetatud liha).</p>
       <div className="mt-2 grid gap-2 sm:grid-cols-2">
         {Object.values(PET_KINDS).map((k) => (
-          <div key={k.id} className="border-2 p-2"><div className="text-xl">{k.icon} {k.name}</div><div className="text-base text-accent">{k.perk}</div><div className="text-base text-muted-foreground">Leidub: {Object.values(REGIONS).filter((r) => r.enemies.includes(k.id)).map((r) => r.name).join(", ")}</div></div>
+          <div key={k.id} className="flex gap-3 border-2 p-2"><Portrait id={k.id} icon={k.icon} alt={k.name} size="sm" /><div><div className="text-xl">{k.name}</div><div className="text-base text-accent">{k.perk}</div><div className="text-base text-muted-foreground">Leidub: {Object.values(REGIONS).filter((r) => r.enemies.includes(k.id)).map((r) => r.name).join(", ")}</div></div></div>
         ))}
       </div>
     </div>
@@ -808,7 +833,7 @@ function ActivePet({ s, mut }: { s: GameState; mut: Mut }) {
     <div className="space-y-3">
       <H>Lemmik</H>
       <div className="flex items-center gap-3 border-2 border-primary/50 p-3">
-        <span className="pulse text-5xl">{petIcon(s.pet)}</span>
+        <Portrait id={s.pet.kind} icon={petIcon(s.pet)} alt={s.pet.name} />
         <div className="flex-1">
           <div className="px-title text-primary">{s.pet.name} <span className="text-accent">LVL {s.pet.lvl}</span></div>
           <div className="text-base text-muted-foreground">{k.name} · {k.desc}</div>
@@ -882,7 +907,7 @@ function NpcTab({ s }: { s: GameState }) {
       {!list.length && <p className="text-muted-foreground">Sa oled veel üksi. Uuri maailma, et leida teisi.</p>}
       <div className="grid gap-2 sm:grid-cols-2">
         {list.map((id) => { const n = NPCS[id]; return (
-          <div key={id} className="border-2 p-2"><div className="text-xl">{n.icon} {n.name}</div><div className="text-base text-accent">{n.faction}</div><div className="text-base text-muted-foreground">{n.desc}</div></div>
+          <div key={id} className="flex gap-3 border-2 p-2"><Portrait id={id} icon={n.icon} alt={n.name} /><div><div className="text-xl">{n.name}</div><div className="text-base text-accent">{n.faction}</div><div className="text-base text-muted-foreground">{n.desc}</div></div></div>
         ); })}
       </div>
     </div>

@@ -5,6 +5,7 @@ import {
   atBar, barBuy, barSell, cardDraw, claimContract, contractProgress, contractsFor, hiloCashOut, hiloPay, playBottle, playDice, playRats, bountyFor, weekKey, type GameState,
 } from "./engine";
 import { PlayerQuests } from "./Online";
+import { Portrait } from "./portraits";
 
 type Mut = (fn: (g: GameState) => string | null | void) => void;
 const H = ({ children }: { children: React.ReactNode }) => <h2 className="px-title mb-2 mt-1 text-primary">&gt; {children}</h2>;
@@ -21,9 +22,10 @@ export function BarTab({ s, mut, user, toast }: { s: GameState; mut: Mut; user: 
   return (
     <div className="space-y-3">
       <H>🍺 Baar «Roostes Kruus»</H>
+      <div className="flex items-start gap-3"><Portrait id="part" icon="🧔" alt="Pärt, baarmen" size="lg" />
       <p className="text-base text-muted-foreground">
         Varemete keldris suitsune kõrts. Leti taga seisab <span className="text-accent">Pärt</span> — pika musta habemega salapärane mees, kes pühib klaasi, mis ei saa kunagi puhtaks. Sul on <span className="text-accent">🪙 {s.inv.cash || 0} korki</span>.
-      </p>
+      </p></div>
       <PartTalk s={s} />
       {!here && <p className="border-2 border-accent/60 p-2 text-accent">Baar asub piirkonnas {REGIONS[BAR_REGION].icon} {REGIONS[BAR_REGION].name}. Ränna sinna, et osta, müüa, mängida või lepingute tasu kätte saada.</p>}
       <div className="flex flex-wrap gap-1">

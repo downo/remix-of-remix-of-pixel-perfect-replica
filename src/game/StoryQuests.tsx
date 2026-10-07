@@ -1,6 +1,9 @@
 import { type GameState } from "./engine";
 import { QUEST_GROUPS, STORY_QUESTS, advanceQuest, qCost, qOpen, qStep } from "./quests";
 
+import { Portrait } from "./portraits";
+const GROUP_NPC: Record<string, string> = { liis: "liis", tom: "kid", koidik: "archivist", ruins: "part" };
+
 type Mut = (fn: (g: GameState) => string | null | void) => void;
 
 export function StoryQuests({ s, mut }: { s: GameState; mut: Mut }) {
@@ -12,7 +15,7 @@ export function StoryQuests({ s, mut }: { s: GameState; mut: Mut }) {
         const qs = STORY_QUESTS.filter((q) => q.group === g);
         return (
           <details key={g} className="mb-2 border-2 p-2" open={qs.some((q) => qOpen(s, q) && qStep(s, q.id) < q.steps.length)}>
-            <summary className="cursor-pointer">{name} <span className="text-muted-foreground">({qs.filter((q) => qStep(s, q.id) >= q.steps.length).length}/{qs.length})</span></summary>
+            <summary className="cursor-pointer">{GROUP_NPC[g] && <span className="mr-2 inline-block align-middle"><Portrait id={GROUP_NPC[g]} alt={g} size="sm" /></span>}{name} <span className="text-muted-foreground">({qs.filter((q) => qStep(s, q.id) >= q.steps.length).length}/{qs.length})</span></summary>
             <ul className="mt-2 space-y-2">
               {qs.map((q) => {
                 const i = qStep(s, q.id); const st = q.steps[i]; const open = qOpen(s, q);

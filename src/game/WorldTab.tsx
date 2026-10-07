@@ -1,5 +1,6 @@
 import { ITEMS, NPCS } from "./data";
 import { type GameState } from "./engine";
+import { Portrait } from "./portraits";
 import {
   COLLECTIONS, FACTIONS, RANKS, STORIES, advanceStory, bondOf, claimCollection, collected, donate, enemyScale, rankOf, repOf, startNewGamePlus, storyStep, worldEventFor,
 } from "./world";
@@ -34,7 +35,7 @@ export function WorldTab({ s, mut, onNgp }: { s: GameState; mut: Mut; onNgp: (g:
       <div className="mb-3 grid gap-2 sm:grid-cols-2">
         {known.map((n) => { const st = STORIES[n]; const i = storyStep(s, n); const step = st.steps[i]; return (
           <div key={n} className="border-2 p-2">
-            <div>{NPCS[n].icon} {NPCS[n].name} — {st.title} <span className="text-accent">{"♥".repeat(bondOf(s, n))}{"♡".repeat(st.steps.length - bondOf(s, n))}</span></div>
+            <div className="flex items-center gap-2"><Portrait id={n} icon={NPCS[n].icon} alt={NPCS[n].name} size="sm" />{NPCS[n].name} — {st.title} <span className="text-accent">{"♥".repeat(bondOf(s, n))}{"♡".repeat(st.steps.length - bondOf(s, n))}</span></div>
             {step ? (<>
               <p className="my-1 text-base">{step.text}</p>
               {Object.keys(step.need).length > 0 && <p className="text-base text-muted-foreground">Vaja: {costStr(step.need)}</p>}
