@@ -35,7 +35,7 @@ export interface GameState {
   rep: Record<string, number>; rankClaimed: Record<string, number[]>; donated: Record<string, number>; bond: Record<string, number>; story: Record<string, number>; choices: string[]; seen: string[]; collDone: string[]; ngp: number;
   terr: string[]; sea: { key: string; base: number } | null; seaClaimed: string;
   path: { n: number; last: string } | null; secrets: string[]; hints: string[];
-  qs?: Record<string, number>; qd?: Record<string, number>; ending?: string;
+  qs?: Record<string, number>; stash?: Record<string, number>; qd?: Record<string, number>; ending?: string;
 }
 export interface Pet { kind: string; kind2?: string; name: string; lvl: number; xp: number; fed: number; gen?: number; mut?: string }
 export type StatKey = "gathered" | "crafted" | "built" | "traveled" | "fished" | "explored" | "raids" | "bosses";
@@ -126,6 +126,40 @@ export function add(s: GameState, id: string, n: number) {
 export const has = (s: GameState, cost: Record<string, number>) => Object.entries(cost).every(([k, v]) => (s.inv[k] || 0) >= v);
 const pay = (s: GameState, cost: Record<string, number>) => Object.entries(cost).forEach(([k, v]) => add(s, k, -v));
 
+// ---------- storage chest (camp) ----------
+export const CHEST_PER_LVL = 150;
+export const chestCap = (s: GameState) => (s.structures.chest || 0) * CHEST_PER_LVL;
+export const chestLoad = (s: GameState) => Object.values(s.stash || {}).reduce((a, b) => a + b, 0);
+const useChest = (s: GameState) => s.region === "camp" && (s.structures.chest || 0) > 0;
+/** Building/crafting at camp may also use items from the chest. */
+export const hasB = (s: GameState, cost: Record<string, number>) => Object.entries(cost).every(([k, v]) => (s.inv[k] || 0) + (useChest(s) ? s.stash?.[k] || 0 : 0) >= v);
+export function payB(s: GameState, cost: Record<string, number>) {
+  for (const [k, v] of Object.entries(cost)) {
+    const fromInv = Math.min(v, s.inv[k] || 0); add(s, k, -fromInv);
+    const rest = v - fromInv; if (rest > 0 && s.stash) { s.stash[k] = (s.stash[k] || 0) - rest; if (s.stash[k] <= 0) delete s.stash[k]; }
+  }
+}
+export function dropItem(s: GameState, id: string, n = 1): string | null {
+  const have = s.inv[id] || 0; if (!have) return "Sul pole seda.";
+  n = Math.min(n, have);
+  if (have - n <= 0 && Object.values(s.equip).includes(id)) return "Võta see enne seljast/käest ära.";
+  add(s, id, -n); log(s, `🗑️ Viskasid ära: ${ITEMS[id]?.name ?? id} ×${n}.`); return null;
+}
+export function chestPut(s: GameState, id: string, n = 1): string | null {
+  if (!useChest(s)) return "Kast on laagris (ehita 🧰 Kast).";
+  const have = s.inv[id] || 0; if (!have || id === "cash") return "Seda ei saa kasti panna.";
+  n = Math.min(n, have, chestCap(s) - chestLoad(s));
+  if (have - n <= 0 && Object.values(s.equip).includes(id)) n = have - 1;
+  if (n <= 0) return "Kast on täis!";
+  add(s, id, -n); s.stash = { ...(s.stash || {}), [id]: (s.stash?.[id] || 0) + n }; return null;
+}
+export function chestTake(s: GameState, id: string, n = 1): string | null {
+  if (!useChest(s)) return "Kast on laagris.";
+  const have = s.stash?.[id] || 0; if (!have) return "Kastis pole seda.";
+  n = Math.min(n, have, capacity(s) - load(s)); if (n <= 0) return "Seljakott on täis!";
+  s.stash![id] = have - n; if (s.stash![id] <= 0) delete s.stash![id]; add(s, id, n); return null;
+}
+
 export function gainXp(s: GameState, n: number, skill?: SkillId) {
   n = Math.round(n * (1 + bonus(s).xp + worldEventFor(s).xp));
   s.xp += n;
@@ -188,13 +222,13 @@ export function startAction(s: GameState, kind: Action["kind"], label: string, t
   if (s.energy < energyCost && !(kind === "travel" && target === "camp")) return "Liiga väsinud. Puhka enne.";
   if (kind === "build") {
     const st = STRUCTURES[target!];
-    if (!has(s, st.cost)) return "Pole piisavalt materjale.";
-    pay(s, st.cost);
+    if (!hasB(s, st.cost)) return "Pole piisavalt materjale.";
+    payB(s, st.cost);
   }
   if (kind === "craft") {
     const r = RECIPES.find((x) => x.id === target)!;
-    if (!has(s, r.cost)) return "Pole piisavalt materjale.";
-    pay(s, r.cost);
+    if (!hasB(s, r.cost)) return "Pole piisavalt materjale.";
+    payB(s, r.cost);
   }
   if (kind === "heal") {
     if (!s.structures.hospital || s.region !== "camp") return "Vajad laagris haiglat.";
@@ -872,6 +906,21 @@ const RANDOM_EVENTS: { w: number; good: boolean; run: (s: GameState) => string }
   { w: 1, good: true, run: (s) => { add(s, "crystal", 3); return "💎 KRISTALLÖÖ! Taevast kukkus helendavaid kristalle — said 3."; } },
   { w: 1, good: true, run: (s) => { add(s, "medkit", 1); add(s, "cloth", 3); add(s, "wood", 4); return "🏚️ HÜLJATUD LAAGER! Leidsid tühja laagri: esmaabikarp, riie ja puit."; } },
   { w: 1, good: true, run: (s) => { const n = 1 + Math.floor(rnd() * 3); add(s, "bandage", n); gainXp(s, 40); return `📻 SOS! Raadiost kostis appihüüd. Aitasid ellujäänu turvalisse kohta (+40 XP, sidemeid ${n}).`; } },
+  { w: 1, good: false, run: (s) => {
+    if (s.combat || s.action || !REGIONS[s.region].danger) { s.energy = clamp(s.energy - 10, 0, 100); return "🌘 TUHAKUU! Kuu värvus halliks ja öö tundus lõputu (energia −10)."; }
+    startCombat(s, "shade"); return "🌘 TUHAKUU! Varjust kerkis vari-koletis.";
+  } },
+  { w: 1, good: false, run: (s) => {
+    if (s.combat || s.action || REGIONS[s.region].danger < 3) return "🐾 BEHEMOTI JÄLJED! Leidsid hiiglaslikud jäljed. Kiirgusala poole…";
+    startCombat(s, "behemoth"); return "🐾 BEHEMOTI JÄLJED! Jäljed lõppesid — behemot seisab su ees!";
+  } },
+  { w: 1, good: true, run: (s) => { add(s, "cash", 30); gainXp(s, 60); return "🍺 PÄRT KAOB! Roostes Kruus oli tühi. Leidsid Pärdi varemetest, jalg kivi all. Tänutäheks 30 🪙 (+60 XP)."; } },
+  { w: 1, good: false, run: (s) => { s.rad = clamp(s.rad + 10, 0, 100); add(s, "crystal", 2); if (rnd() < 0.3) add(s, "voidshard", 1); return "🌀 LÕHE LIIGUB! Taevas nihkus, maa värises. Kiirgus +10, aga maast kerkis kristalle."; } },
+  { w: 1, good: true, run: (s) => {
+    const d = clock(s).day; if (d % 30 !== 0 || s.qd?.dawnDay === d) { add(s, "cash", 5); return "🌅 Koit oli täna eriti punane. Leidsid maast 5 korki."; }
+    s.qd = { ...(s.qd || {}), dawnDay: d }; giveRelic(s, makeRelic(0.3)); gainXp(s, 200);
+    return "🌅 KOIDIKU PÄEV! Kord 30 päeva jooksul tõuseb Lõhest valgus. Said legendaarse leiu ja +200 XP.";
+  } },
   { w: 2, good: false, run: (s) => {
     const d = REGIONS[s.region].danger;
     if (!d || s.combat || s.action) return "👣 Kuskil kaugel kõndis midagi suurt. Maa värises.";
