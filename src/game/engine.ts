@@ -1,3 +1,4 @@
+import { exploreSecrets } from "./lore";
 import { enemyScale, worldEventFor } from "./world";
 import { bonus, maybeRelic, type ExpRun, type Relic } from "./progress";
 import { BAR_BUY, BAR_REGION, BAR_SELL, CONTRACT_POOL, type Contract, CODEX, PET_KINDS, ENEMIES, EVENTS, ITEMS, LORE, RECIPES, REGIONS, STRUCTURES, type Quest, type SkillId } from "./data";
@@ -33,6 +34,7 @@ export interface GameState {
   perks: string[]; relics: Relic[]; charm: string | null; exp: ExpRun | null; expWeek: { week: string; n: number; claimed: boolean } | null;
   rep: Record<string, number>; rankClaimed: Record<string, number[]>; donated: Record<string, number>; bond: Record<string, number>; story: Record<string, number>; choices: string[]; seen: string[]; collDone: string[]; ngp: number;
   terr: string[]; sea: { key: string; base: number } | null; seaClaimed: string;
+  path: { n: number; last: string } | null; secrets: string[]; hints: string[];
 }
 export interface Pet { kind: string; kind2?: string; name: string; lvl: number; xp: number; fed: number; gen?: number; mut?: string }
 export type StatKey = "gathered" | "crafted" | "built" | "traveled" | "fished" | "explored" | "raids" | "bosses";
@@ -57,7 +59,7 @@ export function newGame(now = Date.now()): GameState {
     stats: emptyStats(), daily: { day: 0, base: {}, claimed: [] }, wk: { week: "", base: 0 }, pet: null, codex: [], kennel: [], lastBreed: 0, lastRandom: now, bar: { day: 0, base: {}, done: [] },
     damaged: {}, bossDay: {}, trophies: {}, bountyWeek: "",
     perks: [], relics: [], charm: null, exp: null, expWeek: null,
-    rep: {}, rankClaimed: {}, donated: {}, bond: {}, story: {}, choices: [], seen: [], collDone: [], ngp: 0, terr: [], sea: null, seaClaimed: "",
+    rep: {}, rankClaimed: {}, donated: {}, bond: {}, story: {}, choices: [], seen: [], collDone: [], ngp: 0, terr: [], sea: null, seaClaimed: "", path: null, secrets: [], hints: [],
   };
 }
 
@@ -241,6 +243,7 @@ function finishAction(s: GameState) {
       gainXp(s, 8 + reg.danger * 3, "exploration");
       s.stats.explored++;
       if (reg.danger > 0) maybeRelic(s, 0.04 + reg.danger * 0.01);
+      if (exploreSecrets(s)) break;
       const frag = CODEX.find((f) => f.region === s.region && !s.codex.includes(f.id));
       if (frag && rnd() < 0.3) { s.codex.push(frag.id); log(s, `📼 KOIDIKU FRAGMENT: «${frag.title}» — ${frag.text}`, "lore"); gainXp(s, 20, "exploration"); if (s.codex.length === CODEX.length) log(s, "🔓 Kõik Koidiku fragmendid on koos. Ava Ülesanded → Koidiku arhiiv.", "lore"); break; }
       const expl = skillLevel(s.skills.exploration);
@@ -734,7 +737,7 @@ const DAILY_POOL: DailyQuest[] = [
 ];
 export function dailyFor(day: number) {
   const out: DailyQuest[] = []; let i = day * 3;
-  while (out.length < 3) { const q = DAILY_POOL[(i * 5 + 1) % DAILY_POOL.length]; if (!out.includes(q)) out.push(q); i++; }
+  while (out.length < 5) { const q = DAILY_POOL[(i * 5 + 1) % DAILY_POOL.length]; if (!out.includes(q)) out.push(q); i++; }
   return out;
 }
 export const dailyProgress = (s: GameState, q: DailyQuest) => Math.max(0, statOf(s, q.stat) - (s.daily.base[q.stat] ?? statOf(s, q.stat)));
@@ -954,7 +957,7 @@ export function loadSave(): GameState | null {
 export function migrateSave(p: Partial<GameState>): GameState {
   {
     const base = newGame();
-    return { ...base, ...p, skills: { ...base.skills, ...p.skills }, equip: { ...base.equip, ...p.equip }, stats: { ...base.stats, ...p.stats }, daily: p.daily ?? base.daily, wk: p.wk ?? base.wk, pet: p.pet ?? null, codex: p.codex ?? [], kennel: p.kennel ?? [], lastBreed: p.lastBreed ?? 0, bar: p.bar ?? base.bar, damaged: p.damaged ?? {}, bossDay: p.bossDay ?? {}, trophies: p.trophies ?? {}, bountyWeek: p.bountyWeek ?? "", perks: p.perks ?? [], relics: p.relics ?? [], charm: p.charm ?? null, exp: p.exp ?? null, expWeek: p.expWeek ?? null, rep: p.rep ?? {}, rankClaimed: p.rankClaimed ?? {}, donated: p.donated ?? {}, bond: p.bond ?? {}, story: p.story ?? {}, choices: p.choices ?? [], seen: p.seen ?? Object.keys(p.inv ?? {}), collDone: p.collDone ?? [], ngp: p.ngp ?? 0, terr: p.terr ?? [], sea: p.sea ?? null, seaClaimed: p.seaClaimed ?? "" };
+    return { ...base, ...p, skills: { ...base.skills, ...p.skills }, equip: { ...base.equip, ...p.equip }, stats: { ...base.stats, ...p.stats }, daily: p.daily ?? base.daily, wk: p.wk ?? base.wk, pet: p.pet ?? null, codex: p.codex ?? [], kennel: p.kennel ?? [], lastBreed: p.lastBreed ?? 0, bar: p.bar ?? base.bar, damaged: p.damaged ?? {}, bossDay: p.bossDay ?? {}, trophies: p.trophies ?? {}, bountyWeek: p.bountyWeek ?? "", perks: p.perks ?? [], relics: p.relics ?? [], charm: p.charm ?? null, exp: p.exp ?? null, expWeek: p.expWeek ?? null, rep: p.rep ?? {}, rankClaimed: p.rankClaimed ?? {}, donated: p.donated ?? {}, bond: p.bond ?? {}, story: p.story ?? {}, choices: p.choices ?? [], seen: p.seen ?? Object.keys(p.inv ?? {}), collDone: p.collDone ?? [], ngp: p.ngp ?? 0, terr: p.terr ?? [], sea: p.sea ?? null, seaClaimed: p.seaClaimed ?? "", path: p.path ?? null, secrets: p.secrets ?? [], hints: p.hints ?? [] };
   }
 }
 export function wipe() { localStorage.removeItem(KEY); }

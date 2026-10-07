@@ -6,6 +6,7 @@ import {
 } from "./progress";
 import { PARDI_JUTUD } from "./tekstid";
 import { WorldEventLine } from "./WorldTab";
+import { PathPanel } from "./LoreTabs";
 
 type Mut = (fn: (g: GameState) => string | null | void) => void;
 function H({ children }: { children: React.ReactNode }) { return <h2 className="px-title mb-2 mt-1 text-primary">&gt; {children}</h2>; }
@@ -16,7 +17,7 @@ const NPC_LINES = [
   ["📚 Arhivaar", ["Leidsin uue KOIDIKU signaali. Uuri piirkondi.", "Šahti sügavuses on midagi, mis kumab.", "Lõhe serv laulab öösiti. Ära mine üksi."]],
 ] as const;
 
-export function TodayTab({ s, go }: { s: GameState; go: (tab: "exp" | "skills" | "quests" | "world") => void }) {
+export function TodayTab({ s, mut, go }: { s: GameState; mut: Mut; go: (tab: "exp" | "skills" | "quests" | "world") => void }) {
   const c = clock(s); const w = weatherFor(s); const se = seasonFor(s);
   const pick = <T,>(arr: readonly T[], k: number) => arr[(c.day * 7 + k) % arr.length];
   const nextQuest = QUESTS.find((q) => !q.done(s));
@@ -32,6 +33,7 @@ export function TodayTab({ s, go }: { s: GameState; go: (tab: "exp" | "skills" |
       <H>TUHK — täna (päev {c.day}, {c.label})</H>
       <p className="mb-3 text-muted-foreground">{w.icon} {w.name} · {se.icon} {se.name} {c.night ? "· 🌙 öö" : ""}</p>
       <WorldEventLine s={s} />
+      <PathPanel s={s} mut={mut} />
       <ul className="mb-3 space-y-1">
         <li className="border-2 p-2"><span className="text-accent">🧔 Pärt:</span> «{pick(PARDI_JUTUD, 0)}»</li>
         {NPC_LINES.map(([who, lines], i) => <li key={who} className="border-2 p-2"><span className="text-accent">{who}:</span> «{pick(lines, i + 1)}»</li>)}

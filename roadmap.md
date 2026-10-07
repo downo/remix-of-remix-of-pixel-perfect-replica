@@ -23,3 +23,4 @@ User picked (all options): story ending + boss, achievements, companion (Väike 
 - [x] "Täna" overview screen
 - [x] Factions + reputation, NPC story chains with choices, daily world events, collections, New Game+
 - [x] Clan territories (server-owned, bonuses) + monthly shared seasons (cloud + self-host)
+- [x] Gather/explore/fish/hunt moved from Base to Map; 5 dailies, Tuhkade tee 30-day path, secrets + knowledge journal
