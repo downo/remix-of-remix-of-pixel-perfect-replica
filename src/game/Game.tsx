@@ -147,10 +147,10 @@ export default function Game() {
       </header>
 
       <div className="flex flex-1 flex-col gap-2 md:flex-row">
-        <nav className="px-panel flex gap-1 overflow-x-auto p-1 md:w-44 md:flex-col md:overflow-visible">
+        <nav aria-label="Mängu menüü" className="px-panel flex shrink-0 gap-1 overflow-x-auto p-1 md:w-44 md:flex-col md:overflow-visible">
           {TABS.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)} className={`px-btn shrink-0 text-left ${tab === t.id ? "px-btn-active" : ""}`}>
-              {t.icon} <span className="hidden sm:inline">{t.label}</span>
+            <button key={t.id} title={t.label} aria-label={t.label} aria-current={tab === t.id ? "page" : undefined} onClick={() => setTab(t.id)} className={`px-btn flex min-h-9 shrink-0 items-center gap-2 whitespace-nowrap text-left ${tab === t.id ? "px-btn-active" : ""}`}>
+              <span aria-hidden="true" className="w-6 shrink-0 text-center">{t.icon}</span><span className="hidden sm:inline">{t.label}</span>
             </button>
           ))}
         </nav>

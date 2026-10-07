@@ -69,8 +69,8 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-term);
-    font-size: 20px;
-    line-height: 1.15;
+    font-size: 18px;
+    line-height: 1.25;
     image-rendering: pixelated;
   }
 }
@@ -83,7 +83,7 @@
   }
   .px-title { font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
   .px-btn {
-    font-family: var(--font-term); font-size: 20px;
+    font-family: var(--font-term); font-size: 18px;
     background: var(--secondary); color: var(--secondary-foreground);
     border: 2px solid var(--border); padding: 4px 10px;
     box-shadow: inset -2px -2px 0 color-mix(in oklab, var(--background) 60%, transparent), inset 2px 2px 0 color-mix(in oklab, var(--foreground) 10%, transparent);
