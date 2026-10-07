@@ -12,7 +12,7 @@ import { WorldTab } from "./WorldTab";
 import { StoryQuests } from "./StoryQuests";
 import { Knowledge } from "./LoreTabs";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
-import { Portrait, BASE_IMG } from "./portraits";
+import { Portrait, BASE_IMG, REGION_IMG } from "./portraits";
 
 /** Shows a portrait card the moment the player meets a new survivor. */
 function MeetPopup({ s }: { s: GameState }) {
@@ -406,6 +406,7 @@ function RegionActions({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean
     <div className="mb-4 space-y-4">
       <div>
         <H>Tegevused: {reg.icon} {reg.name}</H>
+        {(REGION_IMG[s.region] || (atCamp && BASE_IMG.camp)) && <img src={REGION_IMG[s.region] ?? BASE_IMG.camp} alt={reg.name} loading="lazy" className="mb-2 max-h-48 w-full border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
         <div className="flex flex-wrap gap-2">
           <button disabled={busy} className="px-btn px-btn-primary" onClick={() => mut((g) => startAction(g, "gather", `🔨 Kogud ressursse: ${reg.name}`))}>🪓 Kogu ({fmt(durationFor(s, "gather"))})</button>
           <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "explore", `🧭 Uurid ümbrust`))}>🧭 Uuri ({fmt(durationFor(s, "explore"))})</button>
