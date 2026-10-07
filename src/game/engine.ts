@@ -398,9 +398,46 @@ export function startBoss(s: GameState): string | null {
   if (s.combat) s.combat.intent = "swipe";
   return null;
 }
+/** Per-enemy telegraphed moves: [mechanic, flavour text]. Mechanics use INTENTS rules. */
+export const ENEMY_MOVES: Record<string, [string, string][]> = {
+  ratdog: [["swipe", "hammustab"], ["charge", "kükitab hüppeks"], ["roar", "lakub haavu (verejanu)"]],
+  wolf: [["swipe", "näksab"], ["charge", "kogub jõudu, kristallid helendavad"], ["smash", "hüppab kõrgelt peale"]],
+  raider: [["swipe", "vehib noaga"], ["smash", "tõstab raudtoru pea kohale"], ["roar", "joob ravijooki"]],
+  crawler: [["swipe", "kriibib"], ["smash", "kukub laest peale"], ["charge", "kerib end kokku"]],
+  shade: [["swipe", "hammustab pimedusest"], ["charge", "kaob… ja ilmub su selja taha"], ["roar", "imeb valgust endasse"]],
+  ghoul: [["swipe", "küünistab"], ["roar", "närib laipa ja ravib end"], ["smash", "viskub raevuga peale"]],
+  golem: [["swipe", "rusikalöök"], ["smash", "tõstab mõlemad käed — MAAVÄRIN"], ["charge", "laeb kristalle"], ["roar", "kasvatab kristallkilpi"]],
+  drone: [["swipe", "tulistab"], ["charge", "laeb laserit"], ["roar", "parandab end"]],
+  scorpion: [["swipe", "näpistab"], ["smash", "tõstab saba — mürk tuleb"], ["charge", "kaevub tuhka"]],
+  lurker: [["swipe", "vaatab sind"], ["charge", "sulgeb silma ja kogub jõudu"], ["smash", "sööstab välja"]],
+  hollow: [["swipe", "puudutab külmalt"], ["roar", "neelab tühjust"], ["charge", "kõver ruum tema ümber"], ["smash", "lööb tühjusega"]],
+  boar: [["swipe", "kihvatab"], ["charge", "kraabib maad — RÜNNAK tuleb"]],
+  elk: [["swipe", "lööb sõrgadega"], ["charge", "langetab mõlemad pead"], ["smash", "tõuseb tagajalgadele"]],
+  bear: [["swipe", "käpalöök"], ["smash", "tõuseb püsti — HIIGELLÖÖK"], ["roar", "möirgab"]],
+  behemoth: [["swipe", "trampib"], ["smash", "tõstab jala su kohale"], ["charge", "hõõgub kiirgusest"], ["roar", "möirgab"]],
+  wraith: [["swipe", "puudutab läbi aja"], ["charge", "keerab aja tagasi"], ["roar", "neelab su mälestusi"], ["smash", "rebib ruumi"]],
+};
+const ENEMY_DEFAULT: [string, string][] = [["swipe", "valmistub löögiks"], ["smash", "tõstab käpad kõrgele"], ["charge", "kogub jõudu"], ["roar", "möirgab ja ravib end"]];
+export const movesFor = (id: string) => ENEMY_MOVES[id] || ENEMY_DEFAULT;
+export const intentText = (s: GameState) => {
+  const c = s.combat; if (!c?.intent) return null;
+  const m = movesFor(c.enemy).find(([k]) => k === c.intent);
+  return { ...INTENTS[c.intent], text: m ? m[1] : INTENTS[c.intent].text };
+};
+/** Boss fights (minibosses + LÕHE SÜDA) have phases at 70/40/15% HP. */
+export const isBoss = (id: string) => isMini(id) || id === "heart";
+export const PHASES = [
+  { at: 0.7, name: "FAAS 2", text: "on vihane — löögid tugevamad!", mult: 1.2 },
+  { at: 0.4, name: "FAAS 3", text: "kogub viimast jõudu ja ravib end!", mult: 1.4, heal: 0.08 },
+  { at: 0.15, name: "VIIMANE FAAS", text: "on meeleheitel — iga löök võib tappa!", mult: 1.7 },
+];
+export const phaseOf = (s: GameState) => s.combat?.phase || 0;
 function nextIntent(s: GameState) {
-  const r = rnd(); const c = s.combat!;
-  c.intent = r < 0.35 ? "swipe" : r < 0.6 ? "smash" : r < 0.85 ? "charge" : "roar";
+  const c = s.combat!;
+  const mv = movesFor(c.enemy);
+  // late boss phases favour heavy moves
+  const pool = (c.phase || 0) >= 2 ? [...mv, ...mv.filter(([k]) => k === "smash" || k === "charge")] : mv;
+  c.intent = pool[Math.floor(rnd() * pool.length)][0];
 }
 
 export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "flee" | "heal") {
