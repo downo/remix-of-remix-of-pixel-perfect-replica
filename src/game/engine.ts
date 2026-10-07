@@ -875,7 +875,7 @@ const RANDOM_EVENTS: { w: number; good: boolean; run: (s: GameState) => string }
   { w: 2, good: false, run: (s) => {
     const d = REGIONS[s.region].danger;
     if (!d || s.combat || s.action) return "👣 Kuskil kaugel kõndis midagi suurt. Maa värises.";
-    startCombat(s, MINI_FOR_DANGER[d]); if (s.combat) s.combat.intent = "swipe";
+    startCombat(s, MINI_FOR_DANGER[d]); const c = s.combat as GameState["combat"]; if (c) c.intent = "swipe";
     return "⚠️ VARITSUS! Piirkonna miniboss tuli ise sulle järele!";
   } },
 ];
