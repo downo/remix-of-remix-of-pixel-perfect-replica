@@ -46,7 +46,7 @@ export function BarTab({ s, mut, user, toast }: { s: GameState; mut: Mut; user: 
       {!here && <p className="bar-panel bar-ember">Baar asub piirkonnas {REGIONS[BAR_REGION].icon} {REGIONS[BAR_REGION].name}. Ränna sinna, et osta, müüa, mängida või lepingute tasu kätte saada.</p>}
       <div className="grid gap-3 md:grid-cols-3">
         <div className="bar-panel md:row-span-2">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-start gap-2">
             <Portrait id="part" icon="🧔" alt="Pärt, baarmen" size="lg" />
             <div><div className="bar-ember text-xl">Pärt</div><div className="text-sm text-muted-foreground">baarmen · salapärane</div></div>
           </div>
@@ -54,7 +54,7 @@ export function BarTab({ s, mut, user, toast }: { s: GameState; mut: Mut; user: 
           <PartTalk s={s} />
         </div>
         {SUBS.map((x) => (
-          <button key={x.id} data-on={sub === x.id ? "1" : "0"} className="bar-tile h-28" onClick={() => setSub(x.id)}>
+          <button key={x.id} data-on={sub === x.id ? "1" : "0"} className="bar-tile h-full min-h-28" onClick={() => setSub(x.id)}>
             <img src={x.img} alt="" loading="lazy" width={480} height={325} />
             <div className="bar-cap"><div className="text-lg">{x.label}</div><div className="text-xs text-muted-foreground">{x.hint}</div></div>
           </button>
