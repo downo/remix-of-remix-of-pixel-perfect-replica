@@ -1,5 +1,6 @@
 // Character perks, rare relics (items with random affixes) and multi-stage expeditions.
 import { ITEMS, REGIONS } from "./data";
+import { territoryBonus } from "./world";
 import { add, armorDef, canStart, gainXp, gameLog as log, weekKey, type GameState } from "./engine";
 
 const rnd = Math.random;
@@ -98,12 +99,12 @@ export const wornRelic = (s: GameState) => (s.relics || []).find((r) => r.uid ==
 
 /** Summed bonuses from perks and the worn relic. Used by engine formulas. */
 export function bonus(s: GameState) {
-  const a = wornRelic(s)?.affixes || {};
+  const a = wornRelic(s)?.affixes || {}; const t = territoryBonus(s);
   return {
-    dmg: (hasPerk(s, "f1") ? 2 : 0) + (a.dmg || 0),
-    def: (hasPerk(s, "f2") ? 2 : 0) + (a.def || 0),
-    gather: (hasPerk(s, "s1") ? 0.15 : 0) + (hasPerk(s, "s2") ? 0.15 : 0) + (a.gather || 0) / 100,
-    xp: (hasPerk(s, "w1") ? 0.1 : 0) + (a.xp || 0) / 100,
+    dmg: (hasPerk(s, "f1") ? 2 : 0) + (a.dmg || 0) + t.dmg,
+    def: (hasPerk(s, "f2") ? 2 : 0) + (a.def || 0) + t.def,
+    gather: (hasPerk(s, "s1") ? 0.15 : 0) + (hasPerk(s, "s2") ? 0.15 : 0) + (a.gather || 0) / 100 + t.gather,
+    xp: (hasPerk(s, "w1") ? 0.1 : 0) + (a.xp || 0) / 100 + t.xp,
     heal: (hasPerk(s, "f3") ? 8 : 0) + (a.heal || 0),
   };
 }

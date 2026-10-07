@@ -5,11 +5,13 @@ import { lovable } from "@/integrations/lovable";
 import { ITEMS } from "./data";
 import { add, weeklyFor, weeklyContribution, migrateSave, type GameState } from "./engine";
 import { blip } from "./sound";
+import { ensureSeason, seasonContribution } from "./world";
+import { Territories, Season } from "./OnlineWorld";
 
 type Mut = (fn: (g: GameState) => string | null | void) => void;
 /** True in the self-hosted (PHP server) download build: username accounts, no email. */
 const SELF_HOSTED = import.meta.env.VITE_SELFHOST === "1";
-type Sub = "account" | "board" | "chat" | "week" | "clan" | "market" | "gift";
+type Sub = "account" | "board" | "chat" | "week" | "season" | "terr" | "clan" | "market" | "gift";
 
 export const scoreOf = (s: GameState) =>
   s.level * 100 + s.kills * 10 + s.discovered.length * 25 + s.lore * 30 + Object.values(s.structures).reduce((a, b) => a + b, 0) * 15
@@ -73,6 +75,8 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
 export async function syncOnline(user: User, s: GameState, day: number) {
   await supabase.from("profiles").upsert({ id: user.id, username: nameOf(user).slice(0, 24), score: scoreOf(s), day, level: s.level, updated_at: new Date().toISOString() });
   if (s.wk.week) await supabase.from("weekly_contrib").upsert({ week: s.wk.week, user_id: user.id, username: nameOf(user).slice(0, 24), amount: Math.min(100000, weeklyContribution(s)), updated_at: new Date().toISOString() });
+  ensureSeason(s);
+  if (s.sea) await supabase.from("season_contrib").upsert({ season: s.sea.key, user_id: user.id, username: nameOf(user).slice(0, 24), amount: Math.min(1000000, seasonContribution(s)), updated_at: new Date().toISOString() });
   await supabase.from("saves").upsert({ user_id: user.id, state: s as never, updated_at: new Date().toISOString() });
 }
 
@@ -81,14 +85,16 @@ export function OnlineTab({ s, mut, user, onLoadCloud, toast }: { s: GameState; 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-1">
-        {([["account", "👤 Konto"], ["board", "🏆 Edetabel"], ["chat", "💬 Vestlus"], ["week", "🗓️ Nädal"], ["clan", "🤝 Klann"], ["market", "⚖️ Turg"], ["gift", "🎁 Kingid"]] as const).map(([id, l]) => (
+        {([["account", "👤 Konto"], ["board", "🏆 Edetabel"], ["chat", "💬 Vestlus"], ["week", "🗓️ Nädal"], ["season", "🌍 Hooaeg"], ["clan", "🤝 Klann"], ["terr", "🏴 Alad"], ["market", "⚖️ Turg"], ["gift", "🎁 Kingid"]] as const).map(([id, l]) => (
           <button key={id} className={`px-btn ${sub === id ? "px-btn-active" : ""}`} onClick={() => setSub(id)}>{l}</button>
         ))}
       </div>
       {sub === "account" && <Account user={user} onLoadCloud={onLoadCloud} toast={toast} />}
       {sub === "board" && <Board user={user} />}
       {sub === "week" && <Week s={s} user={user} />}
-      {sub !== "account" && sub !== "board" && sub !== "week" && !user && <p className="text-muted-foreground">Logi sisse (👤 Konto), et teiste mängijatega koostööd teha ja kaubelda.</p>}
+      {sub === "season" && <Season s={s} mut={mut} user={user} toast={toast} />}
+      {sub === "terr" && <Territories s={s} mut={mut} user={user} toast={toast} />}
+      {sub !== "account" && sub !== "board" && sub !== "week" && sub !== "season" && sub !== "terr" && !user && <p className="text-muted-foreground">Logi sisse (👤 Konto), et teiste mängijatega koostööd teha ja kaubelda.</p>}
       {sub === "chat" && user && <Chat user={user} />}
       {sub === "clan" && user && <Clan s={s} mut={mut} user={user} toast={toast} />}
       {sub === "market" && user && <Market s={s} mut={mut} user={user} toast={toast} />}

@@ -32,6 +32,7 @@ export interface GameState {
   bar: { day: number; base: Record<string, number>; done: string[] };
   perks: string[]; relics: Relic[]; charm: string | null; exp: ExpRun | null; expWeek: { week: string; n: number; claimed: boolean } | null;
   rep: Record<string, number>; rankClaimed: Record<string, number[]>; donated: Record<string, number>; bond: Record<string, number>; story: Record<string, number>; choices: string[]; seen: string[]; collDone: string[]; ngp: number;
+  terr: string[]; sea: { key: string; base: number } | null; seaClaimed: string;
 }
 export interface Pet { kind: string; kind2?: string; name: string; lvl: number; xp: number; fed: number; gen?: number; mut?: string }
 export type StatKey = "gathered" | "crafted" | "built" | "traveled" | "fished" | "explored" | "raids" | "bosses";
@@ -56,7 +57,7 @@ export function newGame(now = Date.now()): GameState {
     stats: emptyStats(), daily: { day: 0, base: {}, claimed: [] }, wk: { week: "", base: 0 }, pet: null, codex: [], kennel: [], lastBreed: 0, lastRandom: now, bar: { day: 0, base: {}, done: [] },
     damaged: {}, bossDay: {}, trophies: {}, bountyWeek: "",
     perks: [], relics: [], charm: null, exp: null, expWeek: null,
-    rep: {}, rankClaimed: {}, donated: {}, bond: {}, story: {}, choices: [], seen: [], collDone: [], ngp: 0,
+    rep: {}, rankClaimed: {}, donated: {}, bond: {}, story: {}, choices: [], seen: [], collDone: [], ngp: 0, terr: [], sea: null, seaClaimed: "",
   };
 }
 
@@ -953,7 +954,7 @@ export function loadSave(): GameState | null {
 export function migrateSave(p: Partial<GameState>): GameState {
   {
     const base = newGame();
-    return { ...base, ...p, skills: { ...base.skills, ...p.skills }, equip: { ...base.equip, ...p.equip }, stats: { ...base.stats, ...p.stats }, daily: p.daily ?? base.daily, wk: p.wk ?? base.wk, pet: p.pet ?? null, codex: p.codex ?? [], kennel: p.kennel ?? [], lastBreed: p.lastBreed ?? 0, bar: p.bar ?? base.bar, damaged: p.damaged ?? {}, bossDay: p.bossDay ?? {}, trophies: p.trophies ?? {}, bountyWeek: p.bountyWeek ?? "", perks: p.perks ?? [], relics: p.relics ?? [], charm: p.charm ?? null, exp: p.exp ?? null, expWeek: p.expWeek ?? null, rep: p.rep ?? {}, rankClaimed: p.rankClaimed ?? {}, donated: p.donated ?? {}, bond: p.bond ?? {}, story: p.story ?? {}, choices: p.choices ?? [], seen: p.seen ?? Object.keys(p.inv ?? {}), collDone: p.collDone ?? [], ngp: p.ngp ?? 0 };
+    return { ...base, ...p, skills: { ...base.skills, ...p.skills }, equip: { ...base.equip, ...p.equip }, stats: { ...base.stats, ...p.stats }, daily: p.daily ?? base.daily, wk: p.wk ?? base.wk, pet: p.pet ?? null, codex: p.codex ?? [], kennel: p.kennel ?? [], lastBreed: p.lastBreed ?? 0, bar: p.bar ?? base.bar, damaged: p.damaged ?? {}, bossDay: p.bossDay ?? {}, trophies: p.trophies ?? {}, bountyWeek: p.bountyWeek ?? "", perks: p.perks ?? [], relics: p.relics ?? [], charm: p.charm ?? null, exp: p.exp ?? null, expWeek: p.expWeek ?? null, rep: p.rep ?? {}, rankClaimed: p.rankClaimed ?? {}, donated: p.donated ?? {}, bond: p.bond ?? {}, story: p.story ?? {}, choices: p.choices ?? [], seen: p.seen ?? Object.keys(p.inv ?? {}), collDone: p.collDone ?? [], ngp: p.ngp ?? 0, terr: p.terr ?? [], sea: p.sea ?? null, seaClaimed: p.seaClaimed ?? "" };
   }
 }
 export function wipe() { localStorage.removeItem(KEY); }

@@ -124,3 +124,41 @@ export function startNewGamePlus(s: GameState): GameState {
   log(g, `🔁 UUS MÄNG+ (${g.ngp}). Ärkad taas silla all — aga sa mäletad. Vaenlased on ${Math.round((enemyScale(g) - 1) * 100)}% tugevamad.`, "lore");
   return g;
 }
+
+// ---------- clan territories (ownership lives on the server; owned ids cached in s.terr) ----------
+export const TERRITORIES: { id: string; name: string; icon: string; desc: string; bonus: { gather?: number; xp?: number; dmg?: number; def?: number } }[] = [
+  { id: "t_mine", name: "Raudkaevandus", icon: "⛏️", desc: "+10% kogumissaaki kogu klannile.", bonus: { gather: 0.1 } },
+  { id: "t_dam", name: "Vana tamm", icon: "💧", desc: "+5% XP kogu klannile.", bonus: { xp: 0.05 } },
+  { id: "t_tower", name: "Raadiomast", icon: "📡", desc: "+5% XP ja +5% saaki.", bonus: { xp: 0.05, gather: 0.05 } },
+  { id: "t_depot", name: "Relvaladu", icon: "🔫", desc: "+2 kahju kogu klannile.", bonus: { dmg: 2 } },
+  { id: "t_crater", name: "Kristallikraater", icon: "💎", desc: "+2 kaitset kogu klannile.", bonus: { def: 2 } },
+];
+export function territoryBonus(s: GameState) {
+  const b = { gather: 0, xp: 0, dmg: 0, def: 0 };
+  for (const t of TERRITORIES) if ((s.terr || []).includes(t.id)) { b.gather += t.bonus.gather || 0; b.xp += t.bonus.xp || 0; b.dmg += t.bonus.dmg || 0; b.def += t.bonus.def || 0; }
+  return b;
+}
+
+// ---------- monthly seasons shared by all players ----------
+export const SEASON_GOAL = 50000;
+export const SEASON_THEMES = [
+  { name: "Tuhatalv", icon: "❄️", desc: "Kõik ellujääjad koos: koguge, võidelge ja uurige, et talv üle elada." },
+  { name: "Kristallikevad", icon: "🌱", desc: "Lõhe on rahutu. Iga tegu loeb ühisesse eesmärki." },
+  { name: "Põlev suvi", icon: "🔥", desc: "Kuumus ja mutandid. Pidage koos vastu." },
+  { name: "Varjude sügis", icon: "🍂", desc: "Ööd pikenevad. Kogukond peab olema valmis." },
+];
+export const seasonKey = (d = new Date()) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+export const seasonTheme = (key: string) => SEASON_THEMES[Math.floor((parseInt(key.slice(5), 10) % 12) / 3)];
+const seasonStat = (s: GameState) => s.kills + (s.stats?.gathered || 0) + (s.stats?.explored || 0) + (s.stats?.crafted || 0);
+export function ensureSeason(s: GameState, key = seasonKey()) { if (s.sea?.key !== key) s.sea = { key, base: seasonStat(s) }; }
+export const seasonContribution = (s: GameState) => Math.max(0, seasonStat(s) - (s.sea?.base ?? seasonStat(s)));
+export function claimSeason(s: GameState, communityTotal: number): string | null {
+  ensureSeason(s);
+  if (communityTotal < SEASON_GOAL) return "Kogukonna eesmärk pole veel täis.";
+  if (seasonContribution(s) < 20) return "Panusta enne ise vähemalt 20 tegevusega.";
+  if (s.seaClaimed === s.sea.key) return "Juba võetud.";
+  s.seaClaimed = s.sea.key;
+  add(s, "cash", 100); gainXp(s, 200); giveRelic(s, makeRelic(0.35));
+  log(s, `${seasonTheme(s.sea.key).icon} Hooaeg võidetud koos! +100 🪙, +200 XP ja hooaja talisman.`, "good");
+  return null;
+}
