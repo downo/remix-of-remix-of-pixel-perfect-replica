@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CODEX, CODEX_FINAL, PET_KINDS, ENEMIES, EVENTS, ITEMS, NPCS, RECIPES, REGIONS, SKILLS, STRUCTURES, LORE, applyTekstid, type ItemType, type SkillId } from "./data";
 import {
-  QUESTS, ACHIEVEMENTS, ENDINGS, armorDef, canStart, capacity, clock, combatAct, durationFor, equipItem, has, hasCompanion, load, loadSave, newGame,
+  QUESTS, ACHIEVEMENTS, ENDINGS, hasB, dropItem, chestPut, chestTake, chestCap, chestLoad, armorDef, canStart, capacity, clock, combatAct, durationFor, equipItem, has, hasCompanion, load, loadSave, newGame,
   resolveEvent, save, canTame, tame, feedPet, renamePet, releasePet, kennelSlots, kennelStore, kennelTake, kennelRelease, breedPets, BREED_COST, BREED_COOLDOWN, WEATHER_FX, baseDefense, raidPower, repairStructure, repairCost, startBoss, bossReady, bountyFor, trophyCount, weekKey, isMini, INTENTS, MINI_FOR_DANGER, dailyFor, dailyProgress, claimDaily, weeklyFor, weeklyContribution, sealRift, skillLevel, startAction, tick, useItem, weaponDmg, weatherFor, seasonFor, PET_MUTS, wipe, xpForLevel, type GameState,
 } from "./engine";
 import { OnlineTab, syncOnline, useOnlineUser, fetchCloudSave, ResetPassword, Account } from "./Online";
@@ -349,8 +349,8 @@ function BaseTab({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean }) {
                 <div className="text-base text-muted-foreground">{st.desc}</div>
                 {locked ? <div className="text-base text-destructive">Vajab: {STRUCTURES[st.requires!].name}</div> : !maxed && (
                   <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className={`text-base ${has(s, st.cost) ? "" : "text-destructive"}`}>{costText(st.cost)} · {fmt(durationFor(s, "build", st.id))}</span>
-                    <button disabled={busy || !atCamp || !has(s, st.cost)} className="px-btn" onClick={() => mut((g) => startAction(g, "build", `🏗️ Ehitad: ${st.name}`, st.id))}>{lvl ? "Arenda" : "Ehita"}</button>
+                    <span className={`text-base ${hasB(s, st.cost) ? "" : "text-destructive"}`}>{costText(st.cost)} · {fmt(durationFor(s, "build", st.id))}</span>
+                    <button disabled={busy || !atCamp || !hasB(s, st.cost)} className="px-btn" onClick={() => mut((g) => startAction(g, "build", `🏗️ Ehitad: ${st.name}`, st.id))}>{lvl ? "Arenda" : "Ehita"}</button>
                   </div>
                 )}
               </div>
@@ -500,6 +500,7 @@ function InvTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: s
   return (
     <div>
       <H>Seljakott ({load(s)}/{capacity(s)})</H>
+      {load(s) >= capacity(s) && <p className="mb-2 text-destructive">Seljakott on täis! Viska midagi ära (🗑️){chestHere ? " või pane kasti (🧰)" : ""}.</p>}
       <div className="mb-2 flex flex-wrap gap-2">
         <input className="px-panel flex-1 px-2 py-1" placeholder="🔍 Otsi..." value={q} onChange={(e) => setQ(e.target.value)} aria-label="Otsi seljakotist" />
         <select className="px-panel px-2 py-1" value={type} onChange={(e) => setType(e.target.value)} aria-label="Tüüp">{Object.entries(TYPE_NAMES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
@@ -515,10 +516,26 @@ function InvTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: s
               <span className="text-2xl">{it.icon}</span>
               <div className="min-w-0 flex-1"><div>{it.name} <span className="text-accent">×{n}</span></div><div className="truncate text-base text-muted-foreground">{it.desc}</div></div>
               {usable && <button className="px-btn" onClick={(e) => { e.stopPropagation(); mut((g) => useItem(g, id)); }}>{["weapon", "armor", "tool"].includes(it.type) ? "Varusta" : "Kasuta"}</button>}
+              {chestHere && id !== "cash" && <button className="px-btn" title="Pane kõik kasti" onClick={(e) => { e.stopPropagation(); mut((g) => chestPut(g, id, n)); }}>🧰</button>}
+              {id !== "cash" && <button className="px-btn" title="Viska üks ära (Shift = kõik)" aria-label={`Viska ära ${it.name}`} onClick={(e) => { e.stopPropagation(); const all = e.shiftKey || (n > 1 && confirm(`Viska ära kõik ${it.name} ×${n}? (Tühista = ainult 1)`)); mut((g) => dropItem(g, id, all ? n : 1)); }}>🗑️</button>}
             </div>
           );
         })}
       </div>
+      {(s.structures.chest || 0) > 0 && (<>
+        <H>🧰 Kast laagris ({chestLoad(s)}/{chestCap(s)})</H>
+        {!chestHere && <p className="mb-1 text-base text-muted-foreground">Kasti saab kasutada ainult laagris. Laagris ehitades ja meisterdades võetakse materjale ka kastist.</p>}
+        {chestHere && <button className="px-btn mb-2" onClick={() => mut((g) => { Object.keys(g.inv).filter((k) => ["material", "rare"].includes(ITEMS[k]?.type)).forEach((k) => chestPut(g, k, g.inv[k])); })}>Pane kõik materjalid kasti</button>}
+        {!Object.keys(s.stash || {}).length && <p className="text-muted-foreground">Kast on tühi.</p>}
+        <div className="grid gap-1 sm:grid-cols-2">
+          {Object.entries(s.stash || {}).map(([id, n]) => (
+            <div key={id} className="flex items-center gap-2 border-2 p-1">
+              <span className="text-2xl">{ITEMS[id]?.icon}</span>
+              <div className="flex-1">{ITEMS[id]?.name} <span className="text-accent">×{n}</span></div>
+              {chestHere && <><button className="px-btn" onClick={() => mut((g) => chestTake(g, id, 1))}>Võta 1</button><button className="px-btn" onClick={() => mut((g) => chestTake(g, id, n))}>Kõik</button></>}
+            </div>))}
+        </div>
+      </>)}
       <p className="mt-2 text-base text-muted-foreground">Klõpsa esemele, et näha üksikasju.</p>
     </div>
   );
@@ -563,8 +580,8 @@ function CraftTab({ s, mut, busy, onDetail }: { s: GameState; mut: Mut; busy: bo
               <div className="text-base text-muted-foreground">{it.desc}</div>
               {!stationOk ? <div className="text-base text-destructive">Vajab: {STRUCTURES[r.station!].icon} {STRUCTURES[r.station!].name}</div> : (
                 <div className="mt-1 flex items-center justify-between gap-2">
-                  <span className={`text-base ${has(s, r.cost) ? "" : "text-destructive"}`}>{costText(r.cost)} · {fmt(durationFor(s, "craft", r.id))}</span>
-                  <button disabled={busy || !has(s, r.cost)} className="px-btn" onClick={() => mut((g) => startAction(g, "craft", `🔨 Valmistad: ${it.name}`, r.id))}>Tee</button>
+                  <span className={`text-base ${hasB(s, r.cost) ? "" : "text-destructive"}`}>{costText(r.cost)} · {fmt(durationFor(s, "craft", r.id))}</span>
+                  <button disabled={busy || !hasB(s, r.cost)} className="px-btn" onClick={() => mut((g) => startAction(g, "craft", `🔨 Valmistad: ${it.name}`, r.id))}>Tee</button>
                 </div>
               )}
             </div>
@@ -814,7 +831,7 @@ function CraftTree({ s, onDetail }: { s: GameState; onDetail: (id: string) => vo
         })}
         {ids.map((id) => {
           const [x, y] = pos[id]; const r = RECIPES.find((q) => q.out === id); const it = ITEMS[id];
-          const owned = (s.inv[id] || 0) > 0; const ok = r && has(s, r.cost) && (!r.station || s.structures[r.station]);
+          const owned = (s.inv[id] || 0) > 0; const ok = r && hasB(s, r.cost) && (!r.station || s.structures[r.station]);
           return (
             <g key={id} transform={`translate(${x},${y})`} className="cursor-pointer" opacity={related(id) ? 1 : 0.25}
               onClick={() => setSel(sel === id ? null : id)} onDoubleClick={() => onDetail(id)}>
