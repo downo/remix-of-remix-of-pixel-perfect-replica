@@ -6,6 +6,10 @@ import {
 } from "./engine";
 import { PlayerQuests } from "./Online";
 import { Portrait } from "./portraits";
+import imgHero from "@/assets/bar/hero.jpg";
+import imgCounter from "@/assets/bar/counter.jpg";
+import imgBoard from "@/assets/bar/board.jpg";
+import imgGames from "@/assets/bar/games.jpg";
 
 type Mut = (fn: (g: GameState) => string | null | void) => void;
 const H = ({ children }: { children: React.ReactNode }) => <h2 className="px-title mb-2 mt-1 text-primary">&gt; {children}</h2>;
@@ -16,27 +20,53 @@ import { PARDI_JUTUD } from "./tekstid";
 // Pärdi jutud on failis tekstid.ts
 export const PART_LINES = PARDI_JUTUD;
 
+const SUBS: { id: Sub; label: string; hint: string; img: string }[] = [
+  { id: "counter", label: "🛒 Lett", hint: "osta · müü romu", img: imgCounter },
+  { id: "jobs", label: "📜 Lepingud", hint: "3 tööd päevas", img: imgBoard },
+  { id: "games", label: "🎲 Mängud", hint: "täring · rotid · pudel", img: imgGames },
+  { id: "board", label: "📌 Tellimused", hint: "teiste mängijate soovid", img: imgBoard },
+];
+
 export function BarTab({ s, mut, user, toast }: { s: GameState; mut: Mut; user: User | null; toast: (t: string) => void }) {
   const [sub, setSub] = useState<Sub>("counter");
   const here = atBar(s);
+  const cur = SUBS.find((x) => x.id === sub)!;
   return (
     <div className="space-y-3">
-      <H>🍺 Baar «Roostes Kruus»</H>
-      <div className="flex items-start gap-3"><Portrait id="part" icon="🧔" alt="Pärt, baarmen" size="lg" />
-      <p className="text-base text-muted-foreground">
-        Varemete keldris suitsune kõrts. Leti taga seisab <span className="text-accent">Pärt</span> — pika musta habemega salapärane mees, kes pühib klaasi, mis ei saa kunagi puhtaks. Sul on <span className="text-accent">🪙 {s.inv.cash || 0} korki</span>.
-      </p></div>
-      <PartTalk s={s} />
-      {!here && <p className="border-2 border-accent/60 p-2 text-accent">Baar asub piirkonnas {REGIONS[BAR_REGION].icon} {REGIONS[BAR_REGION].name}. Ränna sinna, et osta, müüa, mängida või lepingute tasu kätte saada.</p>}
-      <div className="flex flex-wrap gap-1">
-        {([["counter", "🛒 Lett"], ["jobs", "📜 Lepingud"], ["games", "🎲 Mängud"], ["board", "📌 Mängijate tellimused"]] as const).map(([id, l]) => (
-          <button key={id} className={`px-btn ${sub === id ? "px-btn-active" : ""}`} onClick={() => setSub(id)}>{l}</button>
+      <div className="relative overflow-hidden border-2" style={{ borderColor: "var(--ember)" }}>
+        <img src={imgHero} alt="Roostes Kruusi kõrts" width={960} height={400} className="bar-flicker block h-40 w-full object-cover md:h-52" style={{ imageRendering: "pixelated" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, var(--soot) 0%, transparent 60%)" }} />
+        <div className="absolute bottom-0 left-0 p-3">
+          <div className="px-title bar-tan">&gt; Baar</div>
+          <div className="text-3xl bar-ember">«Roostes Kruus»</div>
+          <div className="text-sm text-muted-foreground">Varemete kelder · suits · roostes lett</div>
+        </div>
+        <div className="absolute right-2 top-2 border-2 px-2 py-0.5 text-lg" style={{ borderColor: "var(--ember)", background: "var(--soot)", color: "var(--ember-tan)" }}>🪙 {s.inv.cash || 0}</div>
+      </div>
+      {!here && <p className="bar-panel bar-ember">Baar asub piirkonnas {REGIONS[BAR_REGION].icon} {REGIONS[BAR_REGION].name}. Ränna sinna, et osta, müüa, mängida või lepingute tasu kätte saada.</p>}
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="bar-panel md:row-span-2">
+          <div className="flex items-center gap-3">
+            <Portrait id="part" icon="🧔" alt="Pärt, baarmen" size="lg" />
+            <div><div className="bar-ember text-xl">Pärt</div><div className="text-sm text-muted-foreground">baarmen · salapärane</div></div>
+          </div>
+          <p className="mt-2 text-base text-muted-foreground">Pika musta habemega mees, kes pühib klaasi, mis ei saa kunagi puhtaks.</p>
+          <PartTalk s={s} />
+        </div>
+        {SUBS.map((x) => (
+          <button key={x.id} data-on={sub === x.id ? "1" : "0"} className="bar-tile h-28" onClick={() => setSub(x.id)}>
+            <img src={x.img} alt="" loading="lazy" width={480} height={325} />
+            <div className="bar-cap"><div className="text-lg">{x.label}</div><div className="text-xs text-muted-foreground">{x.hint}</div></div>
+          </button>
         ))}
       </div>
-      {sub === "counter" && <Counter s={s} mut={mut} here={here} />}
-      {sub === "jobs" && <Jobs s={s} mut={mut} here={here} />}
-      {sub === "games" && <Games s={s} mut={mut} here={here} />}
-      {sub === "board" && (user ? <PlayerQuests s={s} mut={mut} user={user} toast={toast} /> : <p className="text-muted-foreground">Teiste mängijate tellimuste nägemiseks logi sisse: 🌐 Mitmikmäng → Konto.</p>)}
+      <div className="bar-panel">
+        <div className="px-title mb-3 bar-ember">&gt; {cur.label}</div>
+        {sub === "counter" && <Counter s={s} mut={mut} here={here} />}
+        {sub === "jobs" && <Jobs s={s} mut={mut} here={here} />}
+        {sub === "games" && <Games s={s} mut={mut} here={here} />}
+        {sub === "board" && (user ? <PlayerQuests s={s} mut={mut} user={user} toast={toast} /> : <p className="text-muted-foreground">Teiste mängijate tellimuste nägemiseks logi sisse: 🌐 Mitmikmäng → Konto.</p>)}
+      </div>
     </div>
   );
 }
@@ -45,10 +75,10 @@ function PartTalk({ s }: { s?: GameState }) {
   const [line, setLine] = useState<string | null>(null);
   const wk = weekKey(new Date()); const b = ENEMIES[bountyFor(wk)];
   return (
-    <div className="space-y-1">
-      {s && <div className="border-2 border-accent p-2 text-base">📜 <span className="text-accent">Pärdi pearahatahvel:</span> {b.icon} {b.name} — 50 🪙 + 100 XP. {s.bountyWeek === wk ? "✅ Selle nädala pearaha makstud." : "«Too mulle tõestust. Kõrv, saba, kroon — mis iganes tal on. Ainult mitte lõhn.»"}</div>}
-      <button className="px-btn" onClick={() => setLine(PART_LINES[Math.floor(Math.random() * PART_LINES.length)])}>🗣️ Küsi Pärdilt nõu</button>
-      {line && <p className="fadein border-2 border-primary/50 p-2 text-base italic text-primary">{line}</p>}
+    <div className="mt-3 space-y-2">
+      {s && <div className="border-l-2 p-2 text-base" style={{ borderColor: "var(--ember)", background: "var(--soot)" }}><div className="bar-tan text-sm">📜 PEARAHATAHVEL</div>{b.icon} {b.name} — <span className="bar-ember">50 🪙 + 100 XP</span><div className="text-sm text-muted-foreground">{s.bountyWeek === wk ? "✅ Selle nädala pearaha makstud." : "«Too mulle tõestust. Kõrv, saba, kroon — mis iganes tal on. Ainult mitte lõhn.»"}</div></div>}
+      <button className="px-btn w-full" onClick={() => setLine(PART_LINES[Math.floor(Math.random() * PART_LINES.length)])}>🗣️ Küsi Pärdilt nõu</button>
+      {line && <p className="fadein border-l-2 p-2 text-base italic bar-tan" style={{ borderColor: "var(--ember-tan)" }}>{line}</p>}
     </div>
   );
 }
