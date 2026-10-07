@@ -240,7 +240,7 @@ export function startAction(s: GameState, kind: Action["kind"], label: string, t
   s.energy -= energyCost;
   // Effort makes you hungry and thirsty: each action costs a little food/water based on how tiring it is.
   if (energyCost > 0) {
-    const effort = energyCost * (1 - Math.min(0.4, (skillLevel(s.skills.survival) - 1) * 0.04));
+    const effort = energyCost * (1 - Math.min(0.4, (skillLevel(s.skills.survival) - 1) * 0.04)) * (1 - bonus(s).needs);
     s.food = clamp(s.food - effort * 0.12, 0, 100);
     s.water = clamp(s.water - effort * 0.14, 0, 100);
   }
@@ -631,7 +631,7 @@ export function tick(s: GameState, now = Date.now()) {
   const resting = !s.action || s.action.kind === "rest";
   const calm = atCamp && resting ? 0.6 - Math.min(0.2, (s.structures.shelter || 0) * 0.05) : 1;
   const sea = seasonFor(s, now).id;
-  const pace = slow * calm;
+  const pace = slow * calm * (1 - bonus(s).needs);
   // While away from the browser, game time stands still: days, seasons, hunger and thirst do not move.
   if (!away) {
     s.gameMins = (s.gameMins ?? Math.floor(((now - s.started) / 1000) * GAME_MIN_PER_SEC)) + dt * GAME_MIN_PER_SEC;

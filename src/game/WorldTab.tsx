@@ -1,3 +1,4 @@
+import { FACTION_IMG } from "./portraits";
 import { ITEMS, NPCS } from "./data";
 import { type GameState } from "./engine";
 import { Portrait } from "./portraits";
@@ -24,6 +25,7 @@ export function WorldTab({ s, mut, onNgp }: { s: GameState; mut: Mut; onNgp: (g:
       <div className="mb-3 grid gap-2 sm:grid-cols-3">
         {FACTIONS.map((f) => { const r = repOf(s, f.id); const rank = rankOf(r); const next = RANKS.find((x) => x.at > r); return (
           <div key={f.id} className="border-2 p-2">
+            {FACTION_IMG[f.id] && <img src={FACTION_IMG[f.id]} alt={f.name} loading="lazy" width={256} height={256} className="mb-2 aspect-square w-full border-2 object-cover [image-rendering:pixelated]" />}
             <div>{f.icon} {f.name}</div>
             <div className="text-accent">{rank.name} · {r} mainet{next ? ` (järgmine ${next.at})` : ""}</div>
             <div className="text-base text-muted-foreground">{f.desc} Rivaal: {FACTIONS.find((x) => x.id === f.rival)?.name}</div>

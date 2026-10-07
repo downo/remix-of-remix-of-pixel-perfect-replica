@@ -11,26 +11,45 @@ export const BRANCHES = [
   { id: "fighter", name: "Võitleja", icon: "⚔️" },
   { id: "scav", name: "Korjaja", icon: "🪓" },
   { id: "wander", name: "Rändur", icon: "🧭" },
+  { id: "surv", name: "Ellujääja", icon: "🔥" },
 ] as const;
+/** Tier → minimum level and point cost. Points come every 2nd level, so a full tree takes a long time. */
+export const TIER_LEVEL = [0, 2, 5, 9, 14, 20];
+export const TIER_COST = [0, 1, 1, 2, 2, 3];
+const P = (id: string, branch: string, tier: number, name: string, icon: string, desc: string): Perk => ({ id, branch, tier, name, icon, desc, minLevel: TIER_LEVEL[tier] });
 export const PERKS: Perk[] = [
-  { id: "f1", branch: "fighter", tier: 1, name: "Raske käsi", icon: "👊", desc: "+2 kahju igas löögis.", minLevel: 2 },
-  { id: "f2", branch: "fighter", tier: 2, name: "Paks nahk", icon: "🛡️", desc: "+2 kaitset.", minLevel: 5 },
-  { id: "f3", branch: "fighter", tier: 3, name: "Verejanu", icon: "🩸", desc: "Iga võit taastab 8 HP.", minLevel: 9 },
-  { id: "s1", branch: "scav", tier: 1, name: "Terav silm", icon: "👁️", desc: "+15% kogumissaaki.", minLevel: 2 },
-  { id: "s2", branch: "scav", tier: 2, name: "Sügavad taskud", icon: "🎒", desc: "Veel +15% kogumissaaki.", minLevel: 5 },
-  { id: "s3", branch: "scav", tier: 3, name: "Aardeküti vaist", icon: "💎", desc: "Haruldasi esemeid leiad 2× sagedamini.", minLevel: 9 },
-  { id: "w1", branch: "wander", tier: 1, name: "Kiire õppija", icon: "📚", desc: "+10% kogemust (XP).", minLevel: 2 },
-  { id: "w2", branch: "wander", tier: 2, name: "Ettevaatlik samm", icon: "🥾", desc: "Ekspeditsioonidel saad 30% vähem kahju.", minLevel: 5 },
-  { id: "w3", branch: "wander", tier: 3, name: "Retkejuht", icon: "🗺️", desc: "Ekspeditsioonide saak +50%.", minLevel: 9 },
+  P("f1", "fighter", 1, "Raske käsi", "👊", "+2 kahju igas löögis."),
+  P("f2", "fighter", 2, "Paks nahk", "🛡️", "+2 kaitset."),
+  P("f3", "fighter", 3, "Verejanu", "🩸", "Iga võit taastab 8 HP."),
+  P("f4", "fighter", 4, "Lahingurütm", "🥁", "Veel +3 kahju."),
+  P("f5", "fighter", 5, "Raudne tahe", "🗿", "+4 kaitset ja võit taastab veel 6 HP."),
+  P("s1", "scav", 1, "Terav silm", "👁️", "+15% kogumissaaki."),
+  P("s2", "scav", 2, "Sügavad taskud", "🎒", "Veel +15% kogumissaaki."),
+  P("s3", "scav", 3, "Aardeküti vaist", "💎", "Haruldasi esemeid leiad 2× sagedamini."),
+  P("s4", "scav", 4, "Romumeister", "🔩", "Veel +20% kogumissaaki."),
+  P("s5", "scav", 5, "Tuhaprohvet", "🔮", "Haruldasi leiad veel 1,5× sagedamini."),
+  P("w1", "wander", 1, "Kiire õppija", "📚", "+10% kogemust (XP)."),
+  P("w2", "wander", 2, "Ettevaatlik samm", "🥾", "Retkedel saad 30% vähem kahju."),
+  P("w3", "wander", 3, "Retkejuht", "🗺️", "Retkede saak +50%."),
+  P("w4", "wander", 4, "Vana rebane", "🦊", "Veel +10% XP."),
+  P("w5", "wander", 5, "Teeraja legend", "🌄", "Retkedel veel 30% vähem kahju ja saak +30%."),
+  P("u1", "surv", 1, "Kõhn kõht", "🍂", "Nälg ja janu kasvavad 15% aeglasemalt."),
+  P("u2", "surv", 2, "Välipraktik", "🩹", "Iga võit taastab 5 HP."),
+  P("u3", "surv", 3, "Kaameli kurk", "🐪", "Nälg ja janu veel 15% aeglasemalt."),
+  P("u4", "surv", 4, "Tuhakindel", "🧱", "+3 kaitset."),
+  P("u5", "surv", 5, "Viimane ellujääja", "🔥", "+10% saaki ja +10% XP."),
 ];
 export const hasPerk = (s: GameState, id: string) => (s.perks || []).includes(id);
-export const perkPoints = (s: GameState) => Math.max(0, s.level - 1 - (s.perks || []).length);
+export const perkCost = (p: Perk) => TIER_COST[p.tier] || 1;
+const spent = (s: GameState) => (s.perks || []).reduce((t, id) => { const p = PERKS.find((x) => x.id === id); return t + (p ? perkCost(p) : 1); }, 0);
+/** One point every second level (lvl 2, 4, 6 ...). */
+export const perkPoints = (s: GameState) => Math.max(0, Math.floor(s.level / 2) - spent(s));
 export function perkBlocked(s: GameState, p: Perk): string | null {
   if (hasPerk(s, p.id)) return "Juba õpitud.";
   if (s.level < p.minLevel) return `Vajab taset ${p.minLevel}.`;
   const prev = PERKS.find((x) => x.branch === p.branch && x.tier === p.tier - 1);
   if (prev && !hasPerk(s, prev.id)) return `Õpi enne: ${prev.name}.`;
-  if (perkPoints(s) < 1) return "Oskuspunkte pole. Tõuse tasemel.";
+  if (perkPoints(s) < perkCost(p)) return `Vajab ${perkCost(p)} punkti.`;
   return null;
 }
 export function learnPerk(s: GameState, id: string): string | null {
@@ -76,7 +95,7 @@ export function makeRelic(boost = 0): Relic {
 }
 /** Chance-based relic drop; returns true when one was found. */
 export function maybeRelic(s: GameState, chance: number, boost = 0): boolean {
-  const c = chance * (hasPerk(s, "s3") ? 2 : 1);
+  const c = chance * (hasPerk(s, "s3") ? 2 : 1) * (hasPerk(s, "s5") ? 1.5 : 1);
   if (rnd() >= c) return false;
   giveRelic(s, makeRelic(boost));
   return true;
@@ -101,11 +120,12 @@ export const wornRelic = (s: GameState) => (s.relics || []).find((r) => r.uid ==
 export function bonus(s: GameState) {
   const a = wornRelic(s)?.affixes || {}; const t = territoryBonus(s);
   return {
-    dmg: (hasPerk(s, "f1") ? 2 : 0) + (a.dmg || 0) + t.dmg,
-    def: (hasPerk(s, "f2") ? 2 : 0) + (a.def || 0) + t.def,
-    gather: (hasPerk(s, "s1") ? 0.15 : 0) + (hasPerk(s, "s2") ? 0.15 : 0) + (a.gather || 0) / 100 + t.gather,
-    xp: (hasPerk(s, "w1") ? 0.1 : 0) + (a.xp || 0) / 100 + t.xp,
-    heal: (hasPerk(s, "f3") ? 8 : 0) + (a.heal || 0),
+    dmg: (hasPerk(s, "f1") ? 2 : 0) + (hasPerk(s, "f4") ? 3 : 0) + (a.dmg || 0) + t.dmg,
+    def: (hasPerk(s, "f2") ? 2 : 0) + (hasPerk(s, "f5") ? 4 : 0) + (hasPerk(s, "u4") ? 3 : 0) + (a.def || 0) + t.def,
+    gather: (hasPerk(s, "s1") ? 0.15 : 0) + (hasPerk(s, "s2") ? 0.15 : 0) + (hasPerk(s, "s4") ? 0.2 : 0) + (hasPerk(s, "u5") ? 0.1 : 0) + (a.gather || 0) / 100 + t.gather,
+    xp: (hasPerk(s, "w1") ? 0.1 : 0) + (hasPerk(s, "w4") ? 0.1 : 0) + (hasPerk(s, "u5") ? 0.1 : 0) + (a.xp || 0) / 100 + t.xp,
+    needs: (hasPerk(s, "u1") ? 0.15 : 0) + (hasPerk(s, "u3") ? 0.15 : 0),
+    heal: (hasPerk(s, "f3") ? 8 : 0) + (hasPerk(s, "f5") ? 6 : 0) + (hasPerk(s, "u2") ? 5 : 0) + (a.heal || 0),
   };
 }
 
@@ -145,7 +165,7 @@ export function expAdvance(s: GameState): string | null {
   s.energy -= EXP_ENERGY; r.stage++;
   const depth = 1 + (r.stage - 1) * 0.35;
   const roll = rnd();
-  const lootMult = depth * (hasPerk(s, "w3") ? 1.5 : 1);
+  const lootMult = depth * (hasPerk(s, "w3") ? 1.5 : 1) * (hasPerk(s, "w5") ? 1.3 : 1);
   if (roll < 0.5) {
     const [id, max] = x.loot[Math.floor(rnd() * x.loot.length)];
     const n = Math.max(1, Math.round((1 + rnd() * max) * lootMult));
@@ -153,7 +173,7 @@ export function expAdvance(s: GameState): string | null {
     r.log.push(`Etapp ${r.stage}: leidsid ${ITEMS[id]?.icon ?? ""} ${ITEMS[id]?.name ?? id} ×${n}.`);
   } else if (roll < 0.82) {
     const raw = Math.round(x.danger * 5 * depth * (0.7 + rnd() * 0.6));
-    const dmg = Math.max(1, Math.round((raw - armorDef(s) * 0.5) * (hasPerk(s, "w2") ? 0.7 : 1)));
+    const dmg = Math.max(1, Math.round((raw - armorDef(s) * 0.5) * (hasPerk(s, "w2") ? 0.7 : 1) * (hasPerk(s, "w5") ? 0.7 : 1)));
     s.hp -= dmg; gainXp(s, Math.round(6 * x.danger), "combat");
     const [id] = x.loot[0]; r.loot[id] = (r.loot[id] || 0) + 1;
     r.log.push(`Etapp ${r.stage}: varitsus! −${dmg} HP. Võitsid, said ${ITEMS[id]?.icon ?? ""} ×1.`);
