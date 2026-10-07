@@ -98,20 +98,36 @@ export function PerkAndRelics({ s, mut }: { s: GameState; mut: Mut }) {
   const b = bonus(s);
   return (
     <div>
-      <H>Oskuspuu — vabu punkte: {perkPoints(s)}</H>
-      <p className="mb-2 text-base text-muted-foreground">Iga teine tase annab ühe punkti. Kõrgemad oskused maksavad rohkem (1–3 punkti). Kõike ei jõua — vali, milline ellujääja sinust saab.</p>
-      <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        {BRANCHES.map((br) => (
-          <div key={br.id} className="border-2 p-2">
-            <div className="mb-1 text-accent">{br.icon} {br.name}</div>
-            {PERKS.filter((p) => p.branch === br.id).map((p) => { const got = hasPerk(s, p.id); const why = perkBlocked(s, p); return (
-              <div key={p.id} className={`mb-1 border-l-2 pl-2 ${got ? "border-primary" : ""}`}>
-                <div>{p.icon} {p.name} {got && <span className="text-primary">[✓]</span>}</div>
-                <div className="text-base text-muted-foreground">{p.desc} (tase {p.minLevel} · {perkCost(p)} p)</div>
-                {!got && <button disabled={!!why} title={why ?? ""} className="px-btn mt-1" onClick={() => mut((g) => learnPerk(g, p.id))}>Õpi</button>}
-              </div>); })}
-          </div>
-        ))}
+      <div className="mb-3 border-b border-[#2a2a2a] pb-3">
+        <H>Oskuspuu — vabu punkte: <span className="text-[#e85d3a]">{perkPoints(s)}</span></H>
+        <p className="text-sm text-muted-foreground">Iga teine tase annab ühe punkti. Kõrgemad oskused maksavad rohkem (1–3 punkti). Kõike ei jõua — vali, milline ellujääja sinust saab.</p>
+      </div>
+      <div className="mb-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {BRANCHES.map((br) => { const c = BRANCH_COLOR[br.id]; return (
+          <section key={br.id}>
+            <div className="mb-3 flex items-center gap-2">
+              <div className="grid h-9 w-9 shrink-0 place-items-center border text-lg" style={{ borderColor: c, background: c + "1a" }}>{br.icon}</div>
+              <h3 className="font-bold uppercase italic tracking-tight" style={{ color: c }}>{br.name}</h3>
+            </div>
+            <div className="flex flex-col gap-2">
+              {PERKS.filter((p) => p.branch === br.id).map((p) => { const got = hasPerk(s, p.id); const why = perkBlocked(s, p); const locked = !got && !!why; return (
+                <div key={p.id} className={`border-l-2 p-3 ${locked ? "border-transparent bg-[#111] opacity-40" : got ? "" : "border-[#2a2a2a] bg-[#1a1a1a]/60"}`}
+                  style={got ? { borderColor: c, background: c + "0d" } : undefined}>
+                  <div className="mb-1 flex items-start justify-between gap-2">
+                    <span className="font-bold" style={{ color: locked ? undefined : c }}>{p.icon} {p.name}</span>
+                    <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px]" style={{ background: locked ? "#1f2937" : c + "33", color: locked ? "#6b7280" : c }}>tase {p.minLevel} · {perkCost(p)} p</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{p.desc}</p>
+                  {got
+                    ? <div className="mt-2 text-[10px] font-bold text-[#4ade80]">[ ✓ ÕPITUD ]</div>
+                    : <button disabled={!!why} title={why ?? ""} className="mt-2 w-full cursor-pointer border py-1.5 text-xs font-bold uppercase transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                        style={{ borderColor: c, color: c, background: c + "1a" }}
+                        onMouseEnter={(e) => { if (!why) { e.currentTarget.style.background = c; e.currentTarget.style.color = "#000"; } }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = c + "1a"; e.currentTarget.style.color = c; }}
+                        onClick={() => mut((g) => learnPerk(g, p.id))}>Õpi</button>}
+                </div>); })}
+            </div>
+          </section>); })}
       </div>
       <H>Talismanid ({(s.relics || []).length})</H>
       <p className="mb-2 text-base text-muted-foreground">Haruldased leiud vaenlastelt, uurimisel ja retkedelt. Kanna korraga ühte. Praegused boonused: +{b.dmg} kahju, +{b.def} kaitset, +{Math.round(b.gather * 100)}% saaki, +{Math.round(b.xp * 100)}% XP{b.heal ? `, +${b.heal} HP võidust` : ""}.</p>
