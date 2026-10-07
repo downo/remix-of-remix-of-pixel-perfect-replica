@@ -874,8 +874,8 @@ const WEEKLY_POOL: Weekly[] = [
   { name: "Ehitusnädal", icon: "🏗️", desc: "Ehitage ja arendage hooneid.", stat: "built", goal: 150 },
   { name: "Kalanädal", icon: "🎣", desc: "Püüdke Üleujutatud alal kala.", stat: "fished", goal: 300 },
 ];
-export const weeklyFor = (wk: string) => WEEKLY_POOL[parseInt(wk.slice(-2), 10) % WEEKLY_POOL.length];
-export const weeklyContribution = (s: GameState) => Math.max(0, statOf(s, weeklyFor(s.wk.week).stat) - s.wk.base);
+export const weeklyFor = (wk: string) => { const n = parseInt(wk.slice(-2), 10); return WEEKLY_POOL[(Number.isFinite(n) ? n : 0) % WEEKLY_POOL.length]; };
+export const weeklyContribution = (s: GameState) => { if (!s.wk?.week) return 0; return Math.max(0, statOf(s, weeklyFor(s.wk.week).stat) - s.wk.base); };
 
 // ---------- pets ----------
 function petXp(s: GameState, n: number) {
