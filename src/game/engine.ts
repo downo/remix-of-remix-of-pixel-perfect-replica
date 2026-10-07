@@ -440,9 +440,20 @@ function nextIntent(s: GameState) {
   c.intent = pool[Math.floor(rnd() * pool.length)][0];
 }
 
-export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "flee" | "heal") {
+export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "flee" | "heal" | "special") {
   if (!s.combat) return;
   const e = ENEMIES[s.combat.enemy];
+  if (!s.combat.intent) s.combat.intent = "swipe";
+  if (act === "special") {
+    if (s.combat.special) { log(s, "Erivõime on selles lahingus juba kasutatud.", "bad"); return; }
+    if (s.energy < 12) { log(s, "Erivõimeks vajad 12 energiat.", "bad"); return; }
+    s.energy -= 12; s.combat.special = true;
+    const d = Math.round(weaponDmg(s) * 1.5);
+    s.combat.hp -= d;
+    log(s, `🌟 ERIVÕIME: pimestav löök! −${d} HP ja vaenlane on uimane.`, "good");
+    if (s.combat.hp > 0) { nextIntent(s); return; }
+    act = "attack"; s.combat.hp = Math.min(s.combat.hp, 0);
+  }
   const dmg = weaponDmg(s);
   s.combat.defending = false;
   if (act === "attack") {
