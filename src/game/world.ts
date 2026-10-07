@@ -18,7 +18,7 @@ export const RANKS = [
   { at: 100, name: "Vend/Õde", reward: { cash: 100 }, relic: true }, { at: 200, name: "Legend", reward: { cash: 200 }, relic: true },
 ] as const;
 export const repOf = (s: GameState, f: string) => s.rep?.[f] || 0;
-export const rankOf = (rep: number) => [...RANKS].reverse().find((r) => rep >= r.at)!;
+export const rankOf = (rep: number) => [...RANKS].reverse().find((r) => rep >= r.at) ?? RANKS[0];
 export function addRep(s: GameState, f: string, n: number) {
   s.rep = s.rep || {}; s.rankClaimed = s.rankClaimed || {};
   const before = rankOf(repOf(s, f));
