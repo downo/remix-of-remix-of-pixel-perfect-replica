@@ -5,6 +5,7 @@ import {
   hasPerk, learnPerk, perkBlocked, perkPoints, relicName, scrapRelic, startExpedition, wearRelic, type AffixKey, type Relic,
 } from "./progress";
 import { PARDI_JUTUD } from "./tekstid";
+import { WorldEventLine } from "./WorldTab";
 
 type Mut = (fn: (g: GameState) => string | null | void) => void;
 function H({ children }: { children: React.ReactNode }) { return <h2 className="px-title mb-2 mt-1 text-primary">&gt; {children}</h2>; }
@@ -15,7 +16,7 @@ const NPC_LINES = [
   ["📚 Arhivaar", ["Leidsin uue KOIDIKU signaali. Uuri piirkondi.", "Šahti sügavuses on midagi, mis kumab.", "Lõhe serv laulab öösiti. Ära mine üksi."]],
 ] as const;
 
-export function TodayTab({ s, go }: { s: GameState; go: (tab: "exp" | "skills" | "quests") => void }) {
+export function TodayTab({ s, go }: { s: GameState; go: (tab: "exp" | "skills" | "quests" | "world") => void }) {
   const c = clock(s); const w = weatherFor(s); const se = seasonFor(s);
   const pick = <T,>(arr: readonly T[], k: number) => arr[(c.day * 7 + k) % arr.length];
   const nextQuest = QUESTS.find((q) => !q.done(s));
@@ -30,6 +31,7 @@ export function TodayTab({ s, go }: { s: GameState; go: (tab: "exp" | "skills" |
     <div>
       <H>TUHK — täna (päev {c.day}, {c.label})</H>
       <p className="mb-3 text-muted-foreground">{w.icon} {w.name} · {se.icon} {se.name} {c.night ? "· 🌙 öö" : ""}</p>
+      <WorldEventLine s={s} />
       <ul className="mb-3 space-y-1">
         <li className="border-2 p-2"><span className="text-accent">🧔 Pärt:</span> «{pick(PARDI_JUTUD, 0)}»</li>
         {NPC_LINES.map(([who, lines], i) => <li key={who} className="border-2 p-2"><span className="text-accent">{who}:</span> «{pick(lines, i + 1)}»</li>)}
@@ -43,6 +45,7 @@ export function TodayTab({ s, go }: { s: GameState; go: (tab: "exp" | "skills" |
       <div className="flex flex-wrap gap-2">
         <button className="px-btn px-btn-primary" onClick={() => go("exp")}>🧭 Ekspeditsioonid</button>
         <button className="px-btn" onClick={() => go("skills")}>⭐ Oskused ja talismanid</button>
+        <button className="px-btn" onClick={() => go("world")}>🌍 Maailm ja fraktsioonid</button>
         <button className="px-btn" onClick={() => go("quests")}>📖 Kõik ülesanded</button>
       </div>
     </div>

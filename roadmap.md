@@ -21,3 +21,4 @@ User picked (all options): story ending + boss, achievements, companion (Väike 
 - [x] Expeditions (multi-stage, retreat/push, weekly goal)
 - [x] Perk tree (3 branches) + relics with random affixes
 - [x] "Täna" overview screen
+- [x] Factions + reputation, NPC story chains with choices, daily world events, collections, New Game+
