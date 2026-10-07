@@ -792,7 +792,7 @@ function Kennel({ s, mut }: { s: GameState; mut: Mut }) {
           <ul className="mb-3 space-y-1">
             {s.kennel.map((p, i) => (
               <li key={i} className="flex flex-wrap items-center justify-between gap-2 px-row">
-                <span>{petIcon(p)} {p.name} <span className="text-accent">LVL {p.lvl}</span>{p.kind2 && <span className="text-base text-muted-foreground"> · {PET_KINDS[p.kind].name} + {PET_KINDS[p.kind2].name}</span>}</span>
+                <span className="flex items-center gap-2"><Portrait id={p.kind} icon={petIcon(p)} alt={p.name} size="sm" />{p.name} <span className="text-accent">LVL {p.lvl}</span>{p.kind2 && <span className="text-base text-muted-foreground"> · {PET_KINDS[p.kind].name} + {PET_KINDS[p.kind2].name}</span>}</span>
                 <span className="flex gap-1">
                   <button className="px-btn" onClick={() => mut((g) => kennelTake(g, i))}>Võta kaasa</button>
                   <button className="px-btn px-btn-danger" onClick={() => confirm(`Lase ${p.name} vabaks?`) && mut((g) => kennelRelease(g, i))}>✕</button>
@@ -823,7 +823,7 @@ function ActivePet({ s, mut }: { s: GameState; mut: Mut }) {
       <p className="text-muted-foreground">Sul pole veel lemmikut. Nõrgesta võitluses loom alla 35% elust ja vajuta 🐾 Taltsuta (vajad toorest või küpsetatud liha).</p>
       <div className="mt-2 grid gap-2 sm:grid-cols-2">
         {Object.values(PET_KINDS).map((k) => (
-          <div key={k.id} className="border-2 p-2"><div className="text-xl">{k.icon} {k.name}</div><div className="text-base text-accent">{k.perk}</div><div className="text-base text-muted-foreground">Leidub: {Object.values(REGIONS).filter((r) => r.enemies.includes(k.id)).map((r) => r.name).join(", ")}</div></div>
+          <div key={k.id} className="flex gap-3 border-2 p-2"><Portrait id={k.id} icon={k.icon} alt={k.name} size="sm" /><div><div className="text-xl">{k.name}</div><div className="text-base text-accent">{k.perk}</div><div className="text-base text-muted-foreground">Leidub: {Object.values(REGIONS).filter((r) => r.enemies.includes(k.id)).map((r) => r.name).join(", ")}</div></div></div>
         ))}
       </div>
     </div>
@@ -833,7 +833,7 @@ function ActivePet({ s, mut }: { s: GameState; mut: Mut }) {
     <div className="space-y-3">
       <H>Lemmik</H>
       <div className="flex items-center gap-3 border-2 border-primary/50 p-3">
-        <span className="pulse text-5xl">{petIcon(s.pet)}</span>
+        <Portrait id={s.pet.kind} icon={petIcon(s.pet)} alt={s.pet.name} />
         <div className="flex-1">
           <div className="px-title text-primary">{s.pet.name} <span className="text-accent">LVL {s.pet.lvl}</span></div>
           <div className="text-base text-muted-foreground">{k.name} · {k.desc}</div>
@@ -907,7 +907,7 @@ function NpcTab({ s }: { s: GameState }) {
       {!list.length && <p className="text-muted-foreground">Sa oled veel üksi. Uuri maailma, et leida teisi.</p>}
       <div className="grid gap-2 sm:grid-cols-2">
         {list.map((id) => { const n = NPCS[id]; return (
-          <div key={id} className="border-2 p-2"><div className="text-xl">{n.icon} {n.name}</div><div className="text-base text-accent">{n.faction}</div><div className="text-base text-muted-foreground">{n.desc}</div></div>
+          <div key={id} className="flex gap-3 border-2 p-2"><Portrait id={id} icon={n.icon} alt={n.name} /><div><div className="text-xl">{n.name}</div><div className="text-base text-accent">{n.faction}</div><div className="text-base text-muted-foreground">{n.desc}</div></div></div>
         ); })}
       </div>
     </div>
