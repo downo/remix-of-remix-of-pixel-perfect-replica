@@ -114,6 +114,7 @@ export const STRUCTURES: Record<string, Structure> = {
   garden: { id: "garden", name: "Peenar", icon: "🌱", desc: "Kasvatab aja jooksul toitu.", cost: { wood: 6, herb: 3 }, time: 60, maxLevel: 5, requires: "shelter" },
   wall: { id: "wall", name: "Kaitsesein", icon: "🧱", desc: "Kaitseb öiste rünnakute eest.", cost: { wood: 15, stone: 10, scrap: 4 }, time: 120, maxLevel: 5, requires: "workbench" },
   storage: { id: "storage", name: "Ladu", icon: "📦", desc: "Suurendab kandevõimet.", cost: { wood: 15, scrap: 5 }, time: 60, maxLevel: 5, requires: "workbench" },
+  chest: { id: "chest", name: "Kast", icon: "🧰", desc: "Hoia laagris asju, mis seljakotis ruumi ei võta (150 kohta/tase). Ehitades ja meisterdades laagris võetakse materjale ka kastist.", cost: { wood: 10, scrap: 2 }, time: 40, maxLevel: 5, requires: "shelter" },
   forge: { id: "forge", name: "Sepikoda", icon: "⚒️", desc: "Sulata maaki, sepista terast.", cost: { stone: 20, ore: 6, scrap: 10 }, time: 120, maxLevel: 1, requires: "workbench" },
   tower: { id: "tower", name: "Vahitorn", icon: "🗼", desc: "Hoiatab rünnakute eest, lihtsustab avastamist.", cost: { wood: 20, scrap: 10, wire: 3 }, time: 120, maxLevel: 2, requires: "wall" },
   lab: { id: "lab", name: "Labor", icon: "⚗️", desc: "Uuri kristalle ja vana tehnoloogiat.", cost: { scrap: 20, wire: 8, core: 1 }, time: 180, maxLevel: 1, requires: "forge" },
