@@ -17,7 +17,7 @@ export interface GameState {
   region: string; discovered: string[];
   structures: Record<string, number>;
   action: Action | null;
-  combat: { enemy: string; hp: number; defending: boolean; intent?: string; rage?: boolean } | null;
+  combat: { enemy: string; hp: number; defending: boolean; intent?: string; rage?: boolean; phase?: number; special?: boolean } | null;
   damaged: Record<string, number>; bossDay: Record<string, number>; trophies: Record<string, number>; bountyWeek: string;
   event: string | null;
   log: LogEntry[];
@@ -374,6 +374,7 @@ export function startCombat(s: GameState, forced?: string) {
   if (!id) return;
   const e = ENEMIES[id];
   s.combat = { enemy: id, hp: Math.round(e.hp * enemyScale(s)), defending: false };
+  nextIntent(s);
   log(s, `☠️ ${e.icon} ${e.name.toUpperCase()} ilmub! ${e.desc}`, "bad");
 }
 
@@ -398,14 +399,61 @@ export function startBoss(s: GameState): string | null {
   if (s.combat) s.combat.intent = "swipe";
   return null;
 }
+/** Per-enemy telegraphed moves: [mechanic, flavour text]. Mechanics use INTENTS rules. */
+export const ENEMY_MOVES: Record<string, [string, string][]> = {
+  ratdog: [["swipe", "hammustab"], ["charge", "kükitab hüppeks"], ["roar", "lakub haavu (verejanu)"]],
+  wolf: [["swipe", "näksab"], ["charge", "kogub jõudu, kristallid helendavad"], ["smash", "hüppab kõrgelt peale"]],
+  raider: [["swipe", "vehib noaga"], ["smash", "tõstab raudtoru pea kohale"], ["roar", "joob ravijooki"]],
+  crawler: [["swipe", "kriibib"], ["smash", "kukub laest peale"], ["charge", "kerib end kokku"]],
+  shade: [["swipe", "hammustab pimedusest"], ["charge", "kaob… ja ilmub su selja taha"], ["roar", "imeb valgust endasse"]],
+  ghoul: [["swipe", "küünistab"], ["roar", "närib laipa ja ravib end"], ["smash", "viskub raevuga peale"]],
+  golem: [["swipe", "rusikalöök"], ["smash", "tõstab mõlemad käed — MAAVÄRIN"], ["charge", "laeb kristalle"], ["roar", "kasvatab kristallkilpi"]],
+  drone: [["swipe", "tulistab"], ["charge", "laeb laserit"], ["roar", "parandab end"]],
+  scorpion: [["swipe", "näpistab"], ["smash", "tõstab saba — mürk tuleb"], ["charge", "kaevub tuhka"]],
+  lurker: [["swipe", "vaatab sind"], ["charge", "sulgeb silma ja kogub jõudu"], ["smash", "sööstab välja"]],
+  hollow: [["swipe", "puudutab külmalt"], ["roar", "neelab tühjust"], ["charge", "kõver ruum tema ümber"], ["smash", "lööb tühjusega"]],
+  boar: [["swipe", "kihvatab"], ["charge", "kraabib maad — RÜNNAK tuleb"]],
+  elk: [["swipe", "lööb sõrgadega"], ["charge", "langetab mõlemad pead"], ["smash", "tõuseb tagajalgadele"]],
+  bear: [["swipe", "käpalöök"], ["smash", "tõuseb püsti — HIIGELLÖÖK"], ["roar", "möirgab"]],
+  behemoth: [["swipe", "trampib"], ["smash", "tõstab jala su kohale"], ["charge", "hõõgub kiirgusest"], ["roar", "möirgab"]],
+  wraith: [["swipe", "puudutab läbi aja"], ["charge", "keerab aja tagasi"], ["roar", "neelab su mälestusi"], ["smash", "rebib ruumi"]],
+};
+const ENEMY_DEFAULT: [string, string][] = [["swipe", "valmistub löögiks"], ["smash", "tõstab käpad kõrgele"], ["charge", "kogub jõudu"], ["roar", "möirgab ja ravib end"]];
+export const movesFor = (id: string) => ENEMY_MOVES[id] || ENEMY_DEFAULT;
+export const intentText = (s: GameState) => {
+  const c = s.combat; if (!c?.intent) return null;
+  const m = movesFor(c.enemy).find(([k]) => k === c.intent);
+  return { ...INTENTS[c.intent], text: m ? m[1] : INTENTS[c.intent].text };
+};
+/** Boss fights (minibosses + LÕHE SÜDA) have phases at 70/40/15% HP. */
+export const isBoss = (id: string) => isMini(id) || id === "heart";
+export const PHASES = [
+  { at: 0.7, name: "FAAS 2", text: "on vihane — löögid tugevamad!", mult: 1.2 },
+  { at: 0.4, name: "FAAS 3", text: "kogub viimast jõudu ja ravib end!", mult: 1.4, heal: 0.08 },
+  { at: 0.15, name: "VIIMANE FAAS", text: "on meeleheitel — iga löök võib tappa!", mult: 1.7 },
+];
+export const phaseOf = (s: GameState) => s.combat?.phase || 0;
 function nextIntent(s: GameState) {
-  const r = rnd(); const c = s.combat!;
-  c.intent = r < 0.35 ? "swipe" : r < 0.6 ? "smash" : r < 0.85 ? "charge" : "roar";
+  const c = s.combat!;
+  const mv = movesFor(c.enemy);
+  // late boss phases favour heavy moves
+  const pool = (c.phase || 0) >= 2 ? [...mv, ...mv.filter(([k]) => k === "smash" || k === "charge")] : mv;
+  c.intent = pool[Math.floor(rnd() * pool.length)][0];
 }
 
-export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "flee" | "heal") {
+export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "flee" | "heal" | "special") {
   if (!s.combat) return;
   const e = ENEMIES[s.combat.enemy];
+  if (!s.combat.intent) s.combat.intent = "swipe";
+  if (act === "special") {
+    if (s.combat.special) { log(s, "Erivõime on selles lahingus juba kasutatud.", "bad"); return; }
+    if (s.energy < 12) { log(s, "Erivõimeks vajad 12 energiat.", "bad"); return; }
+    s.energy -= 12; s.combat.special = true;
+    const d = Math.round(weaponDmg(s) * 1.5);
+    s.combat.hp -= d;
+    log(s, `🌟 ERIVÕIME: pimestav löök! −${d} HP ja vaenlane on uimane.`, "good");
+    if (s.combat.hp > 0) { nextIntent(s); return; }
+  }
   const dmg = weaponDmg(s);
   s.combat.defending = false;
   if (act === "attack") {
@@ -441,24 +489,35 @@ export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "fl
     if (rnd() < 0.5) { s.combat = null; log(s, "🏃 Põgenesid!", "info"); return; }
     log(s, "Põgenemine ebaõnnestus!", "bad");
   }
-  const mini = isMini(e.id) ? s.combat.intent || "swipe" : null;
+  const boss = isBoss(e.id);
+  const mini = s.combat.intent || "swipe";
+  const weak = boss ? 1 : 0.6; // regular enemies telegraph too, but softer
   let skipEnemy = false; let mult = 1;
-  if (mini) {
-    if (mini === "roar" && act === "attack" && s.combat.hp > 0) { const b = Math.round(dmg * 0.9); s.combat.hp -= b; log(s, `🎯 Ta on lahti! Lisakahju −${b} HP.`, "combat"); }
+  {
+    if (mini === "roar" && act === "attack" && s.combat.hp > 0) { const b = Math.round(dmg * 0.9 * weak); s.combat.hp -= b; log(s, `🎯 Ta on lahti! Lisakahju −${b} HP.`, "combat"); }
     if (mini === "charge") {
-      if (act === "heavy") { const b = Math.round(dmg * 1.2); s.combat.hp -= b; skipEnemy = true; log(s, `⛓️ Katkestasid ta jõukogumise! Lisaks −${b} HP ja ta on uimane.`, "good"); }
-      else mult = 2.6;
+      if (act === "heavy") { const b = Math.round(dmg * 1.2 * weak); s.combat.hp -= b; skipEnemy = true; log(s, `⛓️ Katkestasid ta rünnaku! Lisaks −${b} HP ja ta on uimane.`, "good"); }
+      else mult = boss ? 2.6 : 1.8;
     }
     if (mini === "smash") {
-      if (act === "defend") { const b = Math.round(dmg * 1.1); s.combat.hp -= b; mult = 0.1; log(s, `✨ TÄIUSLIK TÕRJE! Lööd vastu: −${b} HP.`, "good"); }
-      else mult = 2.1;
+      if (act === "defend") { const b = Math.round(dmg * 1.1 * weak); s.combat.hp -= b; mult = 0.1; log(s, `✨ TÄIUSLIK TÕRJE! Lööd vastu: −${b} HP.`, "good"); }
+      else mult = boss ? 2.1 : 1.6;
     }
-    if (mini === "roar") { mult = 0; const h = Math.round(e.hp * 0.08); s.combat.hp = Math.min(e.hp, s.combat.hp + h); log(s, `${e.icon} ${e.name} möirgab ja ravib end +${h} HP.`, "bad"); }
-    if (!s.combat.rage && s.combat.hp > 0 && s.combat.hp < e.hp / 2) { s.combat.rage = true; log(s, `🔥 ${e.name} läheb MARRU! Tema löögid on nüüd tugevamad.`, "bad"); }
-    if (s.combat.rage) mult *= 1.3;
+    if (mini === "roar") { mult = 0; const h = Math.round(e.hp * (boss ? 0.08 : 0.05)); s.combat.hp = Math.min(e.hp, s.combat.hp + h); log(s, `${e.icon} ${e.name} ${boss ? "möirgab ja" : ""} ravib end +${h} HP.`, "bad"); }
+    if (boss && s.combat.hp > 0) {
+      const max = Math.round(e.hp * enemyScale(s));
+      let ph = s.combat.phase || 0;
+      while (ph < PHASES.length && s.combat.hp < max * PHASES[ph].at) {
+        const P = PHASES[ph]; ph++;
+        log(s, `⚠️ ${P.name}: ${e.icon} ${e.name} ${P.text}`, "bad");
+        if (P.heal) s.combat.hp = Math.min(max, s.combat.hp + Math.round(max * P.heal));
+      }
+      s.combat.phase = ph; s.combat.rage = ph > 0;
+      if (ph > 0) mult *= PHASES[ph - 1].mult;
+    }
   }
   if (s.combat.hp <= 0) {
-    if (mini) {
+    if (isMini(e.id)) {
       s.stats.bosses++; s.trophies[e.id] = (s.trophies[e.id] || 0) + 1;
       log(s, `🏆 Said trofee: ${e.icon} ${e.name}. Riputa see laagri seinale — iga trofee annab +1 kaitset (kuni 10).`, "loot");
       const wk = weekKey(new Date());
@@ -471,11 +530,11 @@ export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "fl
     if (e.id === "heart" && !s.npcs.includes("__heart")) { s.npcs.push("__heart"); log(s, "💠 Lõhe Süda laguneb tuhandeteks kildadeks. Üks neist jääb su käte vahele — veel soe.", "lore"); }
     if (s.pet) petXp(s, 3);
     { const h = bonus(s).heal; if (h) s.hp = Math.min(s.maxHp, s.hp + h); }
-    maybeRelic(s, mini ? 0.6 : 0.05, mini ? 0.15 : 0);
+    maybeRelic(s, boss ? 0.6 : 0.05, boss ? 0.15 : 0);
     s.kills++; s.combat = null; return;
   }
   // enemy turn
-  if (mini) nextIntent(s);
+  nextIntent(s);
   if (skipEnemy) return;
   const raw = Math.round(e.dmg * enemyScale(s) * (0.7 + rnd() * 0.6) * mult);
   const taken = Math.max(0, Math.round((raw - armorDef(s)) * (s.combat.defending ? 0.4 : 1)));
