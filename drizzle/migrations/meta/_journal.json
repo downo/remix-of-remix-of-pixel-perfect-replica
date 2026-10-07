@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791391652421,
+      "tag": "0000_territories_and_season",
+      "breakpoints": true
+    }
+  ]
 }

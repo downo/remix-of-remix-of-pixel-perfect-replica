@@ -314,6 +314,54 @@ export type Database = {
         }
         Relationships: []
       }
+      season_contrib: {
+        Row: {
+          amount: number
+          season: string
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          amount?: number
+          season: string
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          amount?: number
+          season?: string
+          updated_at?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      territories: {
+        Row: {
+          captured_at: string | null
+          id: string
+          last_attack_at: string | null
+          owner: string | null
+          owner_name: string | null
+        }
+        Insert: {
+          captured_at?: string | null
+          id: string
+          last_attack_at?: string | null
+          owner?: string | null
+          owner_name?: string | null
+        }
+        Update: {
+          captured_at?: string | null
+          id?: string
+          last_attack_at?: string | null
+          owner?: string | null
+          owner_name?: string | null
+        }
+        Relationships: []
+      }
       weekly_contrib: {
         Row: {
           amount: number
@@ -344,6 +392,7 @@ export type Database = {
     }
     Functions: {
       _valid_item: { Args: { _i: string }; Returns: boolean }
+      claim_territory: { Args: { _id: string }; Returns: Json }
       clan_raid: { Args: { _target: string }; Returns: Json }
       create_clan: { Args: { _name: string }; Returns: string }
       gift_claim: {
