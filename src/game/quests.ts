@@ -45,7 +45,7 @@ export const STORY_QUESTS: StoryQuest[] = [
     { text: "Puhastaja vajab parandamist.", need: { scrap: 4, cloth: 2 } },
   ], reward: { xp: 120, items: { water: 6 } } },
   { id: "s5", group: "start", title: "Öö tuleb", req: (s) => qDone(s, "s1"), steps: [
-    { text: "Pärt hoiatab: «Kui päike kukub, hakkab mets sind vaatama.» Mine öösel metsa.", ...atNight("forest", "") },
+    atNight("forest", "Pärt hoiatab: «Kui päike kukub, hakkab mets sind vaatama.» Mine öösel metsa."),
     { text: "Ela üle. Alista öösel üks vaenlane.", cond: (s) => s.kills >= (s.qd?.s5 ?? 0) + 1, condText: "1 võit pärast öösse minekut" },
   ], reward: { xp: 150, items: { leather: 1 } } },
   // ---- Liis
@@ -82,7 +82,7 @@ export const STORY_QUESTS: StoryQuest[] = [
     { text: "Tom loobib kive rottide pihta. Õpeta talle paremat moodi — tee talle lingu.", need: { hide: 1, wood: 2 } },
   ], reward: { xp: 80 } },
   { id: "t2", group: "tom", title: "Tom kadunud", req: (s) => qDone(s, "t1"), steps: [
-    { text: "Hommikul on Tomi ase tühi. Jäljed viivad Metsa.", ...atR("forest", "") },
+    atR("forest", "Hommikul on Tomi ase tühi. Jäljed viivad Metsa."),
     { text: "Ta on kinni koletise pesas. Alista üks vaenlane.", cond: (s) => s.kills >= (s.qd?.t2 ?? 0) + 1, condText: "1 võit" },
   ], reward: { xp: 150, items: { cooked: 2 } } },
   { id: "t3", group: "tom", title: "Vana sõber", req: (s) => qDone(s, "t2"), steps: [
@@ -107,7 +107,7 @@ export const STORY_QUESTS: StoryQuest[] = [
     atR("mountains", "Signaal on tugevaim Mägedes."),
   ], reward: { xp: 150 } },
   { id: "k2", group: "koidik", title: "Varjend 7", req: (s) => qDone(s, "k1"), steps: [
-    { text: "Signaal viib maa-alusesse varjendisse nr 7 Tööstusalal.", ...atR("industrial", "") },
+    atR("industrial", "Signaal viib maa-alusesse varjendisse nr 7 Tööstusalal."),
     { text: "Uks on kinni roostes. Tee see lahti.", need: { scrap: 5 } },
   ], reward: { xp: 180, items: { core: 1 } } },
   { id: "k3", group: "koidik", title: "Kolm akut", req: (s) => qDone(s, "k2"), steps: [
@@ -132,7 +132,7 @@ export const STORY_QUESTS: StoryQuest[] = [
     atR("city", "Kalju peidab end Linnas."),
   ], reward: { xp: 120, items: { cash: 40 } } },
   { id: "r2", group: "ruins", title: "Kadunud joogid", req: (s) => qDone(s, "r1"), steps: [
-    { text: "Baari lastist on kadunud kast «Tuhaviina». Rotid! Too neile pähe 10 liha asemel.", need: { meat: 3 } },
+    { text: "Baari lastist on kadunud kast «Tuhaviina». Rotid! Too rottidele sööta, et nad pesast välja meelitada.", need: { meat: 3 } },
     atR("flooded", "Kast ujus üleujutatud alale."),
   ], reward: { xp: 150, items: { cash: 30 } } },
   { id: "r3", group: "ruins", title: "Baarimängu meister", req: (s) => qDone(s, "r2"), steps: [
@@ -189,6 +189,7 @@ export const STORY_QUESTS: StoryQuest[] = [
     ] },
   ], reward: { xp: 200 } },
   { id: "i2", group: "ind", title: "Valvurdroon", req: (s) => qDone(s, "i1"), steps: [
+    atR("industrial", "Tehase väravas tiirleb valvurdroon."),
     { text: "Valvurdroon jälgib sind. Alista droone, et ligi pääseda.", cond: (s) => s.kills >= (s.qd?.i2 ?? 0) + 3, condText: "3 võitu" },
     { text: "Paranda droon endale.", need: { wire: 4, core: 1 } },
   ], reward: { xp: 300, relic: true } },

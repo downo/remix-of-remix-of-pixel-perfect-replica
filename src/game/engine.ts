@@ -35,6 +35,7 @@ export interface GameState {
   rep: Record<string, number>; rankClaimed: Record<string, number[]>; donated: Record<string, number>; bond: Record<string, number>; story: Record<string, number>; choices: string[]; seen: string[]; collDone: string[]; ngp: number;
   terr: string[]; sea: { key: string; base: number } | null; seaClaimed: string;
   path: { n: number; last: string } | null; secrets: string[]; hints: string[];
+  qs?: Record<string, number>; qd?: Record<string, number>; ending?: string;
 }
 export interface Pet { kind: string; kind2?: string; name: string; lvl: number; xp: number; fed: number; gen?: number; mut?: string }
 export type StatKey = "gathered" | "crafted" | "built" | "traveled" | "fished" | "explored" | "raids" | "bosses";
