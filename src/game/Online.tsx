@@ -455,7 +455,7 @@ export function PlayerQuests({ s, mut, user, toast }: { s: GameState; mut: Mut; 
       {!list.length && <p className="text-muted-foreground">Tahvel on tühi.</p>}
       <ul className="space-y-1">
         {list.map((q) => (
-          <li key={q.id} className="flex flex-wrap items-center justify-between gap-2 border-2 p-2">
+          <li key={q.id} className="flex flex-wrap items-center justify-between gap-2 px-row">
             <span><span className="text-accent">📌 {q.title}</span> <span className="text-muted-foreground">— {names[q.poster_id] ?? "?"}</span><br />
               <span className="text-base">Too {itemLabel(q.want_item)} ×{q.want_qty} → tasu {itemLabel(q.reward_item)} ×{q.reward_qty}</span></span>
             {q.poster_id === user.id

@@ -95,7 +95,7 @@ function Jobs({ s, mut, here }: { s: GameState; mut: Mut; here: boolean }) {
         {contractsFor(s.bar.day).map((c) => {
           const p = contractProgress(s, c); const done = s.bar.done.includes(c.id);
           return (
-            <li key={c.id} className={`flex flex-wrap items-center gap-2 border-2 p-2 ${done ? "text-muted-foreground" : ""}`}>
+            <li key={c.id} className={`flex flex-wrap items-center gap-2 px-row ${done ? "text-muted-foreground" : ""}`}>
               <span className="flex-1">{c.icon} {c.name} — {c.kind === "deliver" ? `too ${lbl(c.item!)} ×${c.n}` : `${c.n}×`} <span className="text-accent">{p}/{c.n}</span> <span className="text-base text-muted-foreground">· 🪙{c.cash} +{c.xp} XP</span></span>
               {done ? <span className="text-primary">[✓]</span> : <button className="px-btn px-btn-primary" disabled={!here || p < c.n} onClick={() => mut((g) => claimContract(g, c.id))}>Anna üle</button>}
             </li>

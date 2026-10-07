@@ -115,7 +115,7 @@ export function PerkAndRelics({ s, mut }: { s: GameState; mut: Mut }) {
       {(s.relics || []).length === 0 && <p className="text-muted-foreground">Veel pole ühtegi. Minibossid ja retkede lõpud annavad neid kõige kindlamalt.</p>}
       <ul className="space-y-1">
         {(s.relics || []).map((r) => { const worn = s.charm === r.uid; return (
-          <li key={r.uid} className={`flex flex-wrap items-center gap-2 border-2 p-2 ${worn ? "border-primary" : ""}`}>
+          <li key={r.uid} className={`flex flex-wrap items-center gap-2 px-row ${worn ? "border-primary" : ""}`}>
             <span className="flex-1"><span className={RARITY[r.rarity].color}>{RARITY[r.rarity].name}</span> {relicName(r)} <span className="text-base text-muted-foreground">· {affixText(r)}</span></span>
             <button className="px-btn" onClick={() => mut((g) => wearRelic(g, worn ? null : r.uid))}>{worn ? "Võta ära" : "Kanna"}</button>
             <button className="px-btn" onClick={() => mut((g) => scrapRelic(g, r.uid))}>Müü</button>
