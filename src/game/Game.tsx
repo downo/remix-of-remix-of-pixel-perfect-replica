@@ -494,6 +494,7 @@ function ItemDetail({ id, s, onClose }: { id: string; s: GameState; onClose: () 
 const TYPE_NAMES: Record<string, string> = { "": "Kõik", resource: "Materjal", food: "Toit", drink: "Jook", medicine: "Ravim", weapon: "Relv", armor: "Rüü", tool: "Tööriist", rare: "Haruldane" };
 function InvTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: string) => void }) {
   const [q, setQ] = useState(""); const [type, setType] = useState(""); const [sort, setSort] = useState<"name" | "qty" | "type">("type");
+  const chestHere = s.region === "camp" && (s.structures.chest || 0) > 0;
   const items = Object.entries(s.inv)
     .filter(([id]) => ITEMS[id] && (!type || ITEMS[id].type === type) && ITEMS[id].name.toLowerCase().includes(q.toLowerCase()))
     .sort(([a, x], [b, y]) => sort === "qty" ? y - x : sort === "name" ? ITEMS[a].name.localeCompare(ITEMS[b].name, "et") : ITEMS[a].type.localeCompare(ITEMS[b].type) || ITEMS[a].name.localeCompare(ITEMS[b].name, "et"));
@@ -525,7 +526,7 @@ function InvTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: s
       {(s.structures.chest || 0) > 0 && (<>
         <H>🧰 Kast laagris ({chestLoad(s)}/{chestCap(s)})</H>
         {!chestHere && <p className="mb-1 text-base text-muted-foreground">Kasti saab kasutada ainult laagris. Laagris ehitades ja meisterdades võetakse materjale ka kastist.</p>}
-        {chestHere && <button className="px-btn mb-2" onClick={() => mut((g) => { Object.keys(g.inv).filter((k) => ["material", "rare"].includes(ITEMS[k]?.type)).forEach((k) => chestPut(g, k, g.inv[k])); })}>Pane kõik materjalid kasti</button>}
+        {chestHere && <button className="px-btn mb-2" onClick={() => mut((g) => { Object.keys(g.inv).filter((k) => ITEMS[k]?.type === "resource").forEach((k) => chestPut(g, k, g.inv[k])); })}>Pane kõik materjalid kasti</button>}
         {!Object.keys(s.stash || {}).length && <p className="text-muted-foreground">Kast on tühi.</p>}
         <div className="grid gap-1 sm:grid-cols-2">
           {Object.entries(s.stash || {}).map(([id, n]) => (

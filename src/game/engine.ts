@@ -1,6 +1,6 @@
 import { exploreSecrets } from "./lore";
 import { enemyScale, worldEventFor } from "./world";
-import { bonus, maybeRelic, type ExpRun, type Relic } from "./progress";
+import { bonus, giveRelic, makeRelic, maybeRelic, type ExpRun, type Relic } from "./progress";
 import { BAR_BUY, BAR_REGION, BAR_SELL, CONTRACT_POOL, type Contract, CODEX, PET_KINDS, ENEMIES, EVENTS, ITEMS, LORE, RECIPES, REGIONS, STRUCTURES, type Quest, type SkillId } from "./data";
 
 export type LogType = "info" | "good" | "bad" | "loot" | "lore" | "combat";
