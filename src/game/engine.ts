@@ -671,11 +671,16 @@ export function tick(s: GameState, now = Date.now()) {
   const prodEvery = 120_000;
   while (now - s.lastProduce >= prodEvery) {
     s.lastProduce += prodEvery;
-    if (lvl(s, "collector")) add(s, "water", lvl(s, "collector") * (weatherFor(s, s.lastProduce).id === "rain" ? 2 : 1));
-    if (lvl(s, "well")) add(s, "water", lvl(s, "well") * 2);
+    // Balanced: chances per tick + storage cap so water/berries don't pile up endlessly.
+    const waterCap = 6 + lvl(s, "collector") + lvl(s, "well") * 2;
+    if ((s.inv.water || 0) < waterCap) {
+      const rain = weatherFor(s, s.lastProduce).id === "rain";
+      if (lvl(s, "collector") && rnd() < lvl(s, "collector") * (rain ? 0.12 : 0.04)) add(s, "water", 1);
+      if (lvl(s, "well") && rnd() < lvl(s, "well") * 0.08) add(s, "water", 1);
+    }
     if (s.structures.smokehouse && s.inv.meat) { const n = Math.min(s.inv.meat, s.structures.smokehouse); add(s, "meat", -n); add(s, "cooked", n); }
-    if (s.structures.generator) add(s, "scrap", 1);
-    if (lvl(s, "garden")) add(s, "berries", lvl(s, "garden"));
+    if (s.structures.generator && rnd() < 0.25) add(s, "scrap", 1);
+    if (lvl(s, "garden") && (s.inv.berries || 0) < 10 + lvl(s, "garden") * 3 && rnd() < lvl(s, "garden") * 0.1) add(s, "berries", 1);
   }
 
   // night raid check
