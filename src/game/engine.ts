@@ -169,7 +169,7 @@ export function durationFor(s: GameState, kind: Action["kind"], target?: string)
 }
 
 export function canStart(s: GameState) {
-  return !s.action && !s.combat && !s.event && s.hp > 0;
+  return !s.action && !s.combat && !s.event && !s.exp && s.hp > 0;
 }
 
 export const HOSPITAL_COST: Record<string, number> = { herb: 2, cloth: 1 };
