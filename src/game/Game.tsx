@@ -389,6 +389,7 @@ function BaseTab({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean }) {
                     <button disabled={busy || !atCamp || !hasB(s, st.cost)} className="px-btn" onClick={() => mut((g) => startAction(g, "build", `🏗️ Ehitad: ${st.name}`, st.id))}>{lvl ? "Arenda" : "Ehita"}</button>
                   </div>
                 )}
+                </div>
               </div>
             );
           })}
