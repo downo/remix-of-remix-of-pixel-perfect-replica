@@ -195,7 +195,7 @@ export default function Game() {
           </section>
         </main>
 
-        <aside className="px-panel p-3 md:w-80">
+        <aside className="px-panel p-3 text-[0.8em] md:w-80">
           <h2 className="px-title mb-2 text-primary">&gt; Päevik</h2>
           <LogList s={s} n={18} />
         </aside>
