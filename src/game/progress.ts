@@ -85,7 +85,7 @@ export function giveRelic(s: GameState, r: Relic) {
   s.relics = s.relics || [];
   if (s.relics.length >= MAX_RELICS) { add(s, "cash", 15); log(s, `✨ Leidsid ${RARITY[r.rarity].name.toLowerCase()} eseme, kuid kott on täis — müüsid selle 15 🪙 eest.`, "loot"); return; }
   s.relics.push(r);
-  log(s, `✨ ${RARITY[r.rarity].name.toUpperCase()} LEID: ${relicName(r)} (${Object.entries(r.affixes).map(([k, v]) => AFFIX[k as AffixKey].label(v!)).join(", ")}). Kanna seda: ⭐ Oskused → Talismanid.`, "loot");
+  log(s, `✨ ${RARITY[r.rarity].name.toUpperCase()} LEID: ${relicName(r)} (${Object.entries(r.affixes).map(([k, v]) => AFFIX[k as AffixKey].label(v!)).join(", ")}). Kanna seda: 🎒 Inventar → Talismanid.`, "loot");
 }
 export function wearRelic(s: GameState, uid: string | null) { s.charm = uid; }
 export function scrapRelic(s: GameState, uid: string): string | null {

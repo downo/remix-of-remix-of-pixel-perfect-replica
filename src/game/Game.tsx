@@ -1,3 +1,4 @@
+import { AFFIX, RARITY, relicName, scrapRelic, wearRelic, wornRelic, type AffixKey, type Relic } from "./progress";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CODEX, CODEX_FINAL, PET_KINDS, ENEMIES, EVENTS, ITEMS, NPCS, RECIPES, REGIONS, SKILLS, STRUCTURES, LORE, applyTekstid, type ItemType, type SkillId } from "./data";
 import {
@@ -494,11 +495,14 @@ function ItemDetail({ id, s, onClose }: { id: string; s: GameState; onClose: () 
 }
 
 const TYPE_NAMES: Record<string, string> = { "": "Kõik", resource: "Materjal", food: "Toit", drink: "Jook", medicine: "Ravim", weapon: "Relv", armor: "Rüü", tool: "Tööriist", rare: "Haruldane" };
+const relicAffixes = (r: Relic) => Object.entries(r.affixes).map(([k, v]) => AFFIX[k as AffixKey].label(v!)).join(", ");
 function InvTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: string) => void }) {
   const [q, setQ] = useState(""); const [type, setType] = useState(""); const [sort, setSort] = useState<"name" | "qty" | "type">("type");
   const chestHere = s.region === "camp" && (s.structures.chest || 0) > 0;
+  const worn = Object.values(s.equip);
   const items = Object.entries(s.inv)
-    .filter(([id]) => ITEMS[id] && (!type || ITEMS[id].type === type) && ITEMS[id].name.toLowerCase().includes(q.toLowerCase()))
+    .map(([id, n]) => [id, n - (worn.includes(id) ? 1 : 0)] as [string, number])
+    .filter(([id, n]) => n > 0 && ITEMS[id] && (!type || ITEMS[id].type === type) && ITEMS[id].name.toLowerCase().includes(q.toLowerCase()))
     .sort(([a, x], [b, y]) => sort === "qty" ? y - x : sort === "name" ? ITEMS[a].name.localeCompare(ITEMS[b].name, "et") : ITEMS[a].type.localeCompare(ITEMS[b].type) || ITEMS[a].name.localeCompare(ITEMS[b].name, "et"));
   return (
     <div>
@@ -525,6 +529,16 @@ function InvTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: s
           );
         })}
       </div>
+      <H>📿 Talismanid ({(s.relics || []).filter((r) => r.uid !== s.charm).length})</H>
+      {!(s.relics || []).filter((r) => r.uid !== s.charm).length && <p className="text-muted-foreground">Kotis pole talismane.{s.charm ? " Kantav on näha Varustuse all." : ""}</p>}
+      <div className="grid gap-1 sm:grid-cols-2">
+        {(s.relics || []).filter((r) => r.uid !== s.charm).map((r) => (
+          <div key={r.uid} className="flex items-center gap-2 border-2 p-1">
+            <div className="min-w-0 flex-1"><div><span className={RARITY[r.rarity].color}>{RARITY[r.rarity].name}</span> {relicName(r)}</div><div className="truncate text-base text-muted-foreground">{relicAffixes(r)}</div></div>
+            <button className="px-btn" onClick={() => mut((g) => wearRelic(g, r.uid))}>Kanna</button>
+            <button className="px-btn" title="Müü" onClick={() => { if (confirm(`Müüd ${relicName(r)}?`)) mut((g) => scrapRelic(g, r.uid)); }}>🪙</button>
+          </div>))}
+      </div>
       {(s.structures.chest || 0) > 0 && (<>
         <H>🧰 Kast laagris ({chestLoad(s)}/{chestCap(s)})</H>
         {!chestHere && <p className="mb-1 text-base text-muted-foreground">Kasti saab kasutada ainult laagris. Laagris ehitades ja meisterdades võetakse materjale ka kastist.</p>}
@@ -549,19 +563,25 @@ function GearTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: 
   return (
     <div>
       <H>Varustus</H>
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {slots.map(([k, l, ic]) => {
           const id = s.equip[k]; const it = id ? ITEMS[id] : null;
-          const opts = Object.keys(s.inv).filter((x) => ITEMS[x].type === k);
+          const opts = Object.keys(s.inv).filter((x) => ITEMS[x]?.type === k);
           return (
             <div key={k} className="border-2 p-2">
               <div className="px-title text-accent">{ic} {l}</div>
               {it ? <div className="my-2 cursor-pointer text-xl hover:text-primary" onClick={() => onDetail(id!)}>{it.icon} {it.name}</div> : <div className="my-2 text-xl text-muted-foreground">— tühi —</div>}
               {it && <div className="text-base text-muted-foreground">{it.dmg ? `Kahju ${it.dmg}` : it.def ? `Kaitse ${it.def}` : `Kogumine +${it.gather}`}</div>}
+              {it && <button className="px-btn mt-1" onClick={() => mut((g) => { g.equip[k] = null; })}>Võta ära</button>}
               <div className="mt-2 flex flex-wrap gap-1">{opts.filter((o) => o !== id).map((o) => <button key={o} className="px-btn" onClick={() => mut((g) => equipItem(g, o))}>{ITEMS[o].icon}</button>)}</div>
             </div>
           );
         })}
+        {(() => { const r = wornRelic(s); return (
+          <div className="border-2 p-2">
+            <div className="px-title text-accent">📿 Talisman</div>
+            {r ? <><div className="my-2 text-xl"><span className={RARITY[r.rarity].color}>{RARITY[r.rarity].name}</span> {relicName(r)}</div><div className="text-base text-muted-foreground">{relicAffixes(r)}</div><button className="px-btn mt-1" onClick={() => mut((g) => wearRelic(g, null))}>Võta ära</button></> : <div className="my-2 text-xl text-muted-foreground">— tühi —</div>}
+          </div>); })()}
       </div>
       <p className="mt-3">⚔️ Kahju: <span className="text-primary">{weaponDmg(s)}</span> · 🛡️ Kaitse: <span className="text-primary">{armorDef(s)}</span></p>
     </div>
