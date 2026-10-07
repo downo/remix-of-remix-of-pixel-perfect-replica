@@ -1,7 +1,7 @@
 import { TEKSTID, PARDI_JUTUD } from "./tekstid";
 // Game content definitions. Add new items/enemies/regions/recipes here.
 
-export type ItemType = "resource" | "food" | "drink" | "medicine" | "weapon" | "armor" | "tool" | "rare";
+export type ItemType = "resource" | "food" | "drink" | "medicine" | "weapon" | "armor" | "head" | "boots" | "tool" | "rare";
 export interface Item {
   id: string; name: string; icon: string; type: ItemType; desc: string;
   food?: number; water?: number; heal?: number; rad?: number;
@@ -38,6 +38,19 @@ export const ITEMS: Record<string, Item> = {
   rags: { id: "rags", name: "Kaltsud", icon: "👕", type: "armor", desc: "Peaaegu mitte midagi.", def: 1 },
   leather: { id: "leather", name: "Nahkrüü", icon: "🦺", type: "armor", desc: "Õmmeldud mutandinahast.", def: 4 },
   plate: { id: "plate", name: "Romuplaatrüü", icon: "🛡️", type: "armor", desc: "Raske, kuid kindel.", def: 8 },
+  scrapvest: { id: "scrapvest", name: "Romuvest", icon: "🦺", type: "armor", desc: "Baarmeni lemmik. Plekitükid nahkvestil.", def: 6 },
+  crabshell: { id: "crabshell", name: "Krabikoorik", icon: "🦀", type: "armor", desc: "HARULDANE. Raudkrabi kest, mis on nüüd sinu oma.", def: 11 },
+  ragcap: { id: "ragcap", name: "Kaltsumüts", icon: "🧢", type: "head", desc: "Hoiab vähemalt tuha juustest eemal.", def: 1 },
+  hidehood: { id: "hidehood", name: "Nahkkapuuts", icon: "🪖", type: "head", desc: "Mutandinahast kapuuts.", def: 2 },
+  scraphelm: { id: "scraphelm", name: "Romukiiver", icon: "⛑️", type: "head", desc: "Vana pott, rihmad küljes. Toimib.", def: 3 },
+  minerhelm: { id: "minerhelm", name: "Kaevurikiiver", icon: "👷", type: "head", desc: "Lambiga kiiver sügavatest šahtidest.", def: 4 },
+  ratcrown: { id: "ratcrown", name: "Rotikuninga kroon", icon: "👑", type: "head", desc: "HARULDANE. Väike, kõver ja väga uhke.", def: 5 },
+  radmask: { id: "radmask", name: "Kiirgusema mask", icon: "🎭", type: "head", desc: "HARULDANE. Sumiseb vaikselt nagu vana televiisor.", def: 7 },
+  footwraps: { id: "footwraps", name: "Jalamähised", icon: "🧦", type: "boots", desc: "Riideribad ümber jalgade.", def: 1 },
+  hideboots: { id: "hideboots", name: "Nahksaapad", icon: "🥾", type: "boots", desc: "Pehmed ja vaiksed.", def: 2 },
+  steelboots: { id: "steelboots", name: "Raudninaga saapad", icon: "👢", type: "boots", desc: "Rüüstajate lemmik. Raske, aga kindel.", def: 3 },
+  ashwalkers: { id: "ashwalkers", name: "Tuhakõndijad", icon: "🩴", type: "boots", desc: "HARULDANE. Tuhahiiu tallad. Tuhk ei hakka külge.", def: 5 },
+  voidboots: { id: "voidboots", name: "Lõhekõndijad", icon: "🌌", type: "boots", desc: "LEGENDAARNE. Sammud ei tee häält isegi tühjuses.", def: 8 },
   runearmor: { id: "runearmor", name: "Ruunirüü", icon: "🧥", type: "armor", desc: "Kumab pimedas.", def: 13 },
   stonetool: { id: "stonetool", name: "Kivikirves", icon: "🪓", type: "tool", desc: "Algeline tööriist.", gather: 1 },
   irontool: { id: "irontool", name: "Rauast kirka", icon: "⛏️", type: "tool", desc: "Kogub kiiremini ja rohkem.", gather: 2 },
@@ -82,8 +95,8 @@ export interface Enemy { id: string; name: string; icon: string; hp: number; dmg
 export const ENEMIES: Record<string, Enemy> = {
   ratdog: { id: "ratdog", name: "Mutantne röövlikoer", icon: "🐕", hp: 22, dmg: 4, xp: 10, loot: [["meat", .8, 1], ["hide", .5, 1]], desc: "Kõhn, kaks rida hambaid." },
   wolf: { id: "wolf", name: "Kristallhunt", icon: "🐺", hp: 35, dmg: 7, xp: 18, loot: [["meat", .9, 2], ["hide", .7, 1], ["crystal", .1, 1]], desc: "Seljal kasvavad kristallid." },
-  raider: { id: "raider", name: "Rüüstaja", icon: "🥷", hp: 40, dmg: 8, xp: 22, loot: [["scrap", .7, 2], ["can", .4, 1], ["bandage", .3, 1]], desc: "Näljane ja relvastatud." },
-  crawler: { id: "crawler", name: "Šahtiroomaja", icon: "🦂", hp: 30, dmg: 6, xp: 15, loot: [["hide", .5, 1], ["ore", .4, 1]], desc: "Liigub seintel." },
+  raider: { id: "raider", name: "Rüüstaja", icon: "🥷", hp: 40, dmg: 8, xp: 22, loot: [["scrap", .7, 2], ["can", .4, 1], ["bandage", .3, 1], ["scraphelm", .05, 1], ["steelboots", .05, 1]], desc: "Näljane ja relvastatud." },
+  crawler: { id: "crawler", name: "Šahtiroomaja", icon: "🦂", hp: 30, dmg: 6, xp: 15, loot: [["hide", .5, 1], ["ore", .4, 1], ["minerhelm", .04, 1]], desc: "Liigub seintel." },
   shade: { id: "shade", name: "Vari", icon: "👤", hp: 45, dmg: 10, xp: 30, loot: [["rune", .25, 1], ["crystal", .3, 1]], desc: "Ilmub ainult pimedas." },
   ghoul: { id: "ghoul", name: "Kiirgusghoul", icon: "🧟", hp: 55, dmg: 11, xp: 32, loot: [["scrap", .5, 2], ["antirad", .2, 1]], desc: "Kunagi oli see inimene." },
   golem: { id: "golem", name: "Kristallgolem", icon: "🗿", hp: 80, dmg: 12, xp: 50, loot: [["crystal", .8, 2], ["stone", 1, 3]], desc: "Aeglane, kuid kohutav." },
@@ -96,11 +109,11 @@ export const ENEMIES: Record<string, Enemy> = {
   boar: { id: "boar", name: "Kiirgusmetssiga", icon: "🐗", hp: 45, dmg: 8, xp: 25, loot: [["bigmeat", 1, 2], ["hide", .8, 1]], desc: "Jahisaak. Kihvad nagu nuga." },
   elk: { id: "elk", name: "Kahepäine põder", icon: "🫎", hp: 75, dmg: 11, xp: 45, loot: [["bigmeat", 1, 3], ["hide", 1, 2]], desc: "Jahisaak. Mõlemad pead vaatavad sind." },
   bear: { id: "bear", name: "Tuhakaru", icon: "🐻", hp: 120, dmg: 16, xp: 80, loot: [["bigmeat", 1, 5], ["hide", 1, 3]], desc: "Jahisaak. Suurim liha — ja suurim oht." },
-  heart: { id: "heart", name: "LÕHE SÜDA", icon: "💠", hp: 420, dmg: 24, xp: 600, loot: [["voidshard", 1, 1], ["crystal", 1, 3], ["core", .8, 1]], desc: "BOSS. Haruldane. See peegeldab taevasid. See peegeldab sind." },
-  ratking: { id: "ratking", name: "Rotikuningas", icon: "🐀", hp: 110, dmg: 9, xp: 120, loot: [["cash", 1, 15], ["hide", 1, 4], ["bigmeat", .6, 2], ["medkit", .3, 1]], desc: "MINIBOSS. Sada rotti, sabad sõlmes, üks kroon. Ta on oma riigi üle väga uhke." },
-  ironcrab: { id: "ironcrab", name: "Raudkrabi", icon: "🦀", hp: 170, dmg: 13, xp: 200, loot: [["cash", 1, 25], ["scrap", 1, 10], ["ore", .8, 4], ["medkit", .4, 1]], desc: "MINIBOSS. Kest on kokku keevitatud vanadest autouksest. Klõpsutab ähvardavalt." },
-  ashgiant: { id: "ashgiant", name: "Tuhahiid", icon: "🗿", hp: 240, dmg: 17, xp: 320, loot: [["cash", 1, 40], ["stone", 1, 15], ["crystal", .8, 3], ["core", .3, 1]], desc: "MINIBOSS. Tuhast ja vihast kokku kleebitud. Kui ta kõnnib, kukub temalt mägesid." },
-  radmother: { id: "radmother", name: "Kiirgusema", icon: "🕷️", hp: 320, dmg: 21, xp: 480, loot: [["cash", 1, 60], ["crystal", 1, 4], ["core", .6, 1], ["rune", .5, 2]], desc: "MINIBOSS. Helendav ämblik, kelle võrk sumiseb nagu vana televiisor." },
+  heart: { id: "heart", name: "LÕHE SÜDA", icon: "💠", hp: 420, dmg: 24, xp: 600, loot: [["voidshard", 1, 1], ["crystal", 1, 3], ["core", .8, 1], ["voidboots", .5, 1]], desc: "BOSS. Haruldane. See peegeldab taevasid. See peegeldab sind." },
+  ratking: { id: "ratking", name: "Rotikuningas", icon: "🐀", hp: 110, dmg: 9, xp: 120, loot: [["cash", 1, 15], ["hide", 1, 4], ["bigmeat", .6, 2], ["medkit", .3, 1], ["ratcrown", .35, 1]], desc: "MINIBOSS. Sada rotti, sabad sõlmes, üks kroon. Ta on oma riigi üle väga uhke." },
+  ironcrab: { id: "ironcrab", name: "Raudkrabi", icon: "🦀", hp: 170, dmg: 13, xp: 200, loot: [["cash", 1, 25], ["scrap", 1, 10], ["ore", .8, 4], ["medkit", .4, 1], ["crabshell", .3, 1]], desc: "MINIBOSS. Kest on kokku keevitatud vanadest autouksest. Klõpsutab ähvardavalt." },
+  ashgiant: { id: "ashgiant", name: "Tuhahiid", icon: "🗿", hp: 240, dmg: 17, xp: 320, loot: [["cash", 1, 40], ["stone", 1, 15], ["crystal", .8, 3], ["core", .3, 1], ["ashwalkers", .3, 1]], desc: "MINIBOSS. Tuhast ja vihast kokku kleebitud. Kui ta kõnnib, kukub temalt mägesid." },
+  radmother: { id: "radmother", name: "Kiirgusema", icon: "🕷️", hp: 320, dmg: 21, xp: 480, loot: [["cash", 1, 60], ["crystal", 1, 4], ["core", .6, 1], ["rune", .5, 2], ["radmask", .3, 1]], desc: "MINIBOSS. Helendav ämblik, kelle võrk sumiseb nagu vana televiisor." },
 };
 
 export interface Structure { id: string; name: string; icon: string; desc: string; cost: Record<string, number>; time: number; maxLevel: number; requires?: string }
@@ -139,6 +152,10 @@ export const RECIPES: Recipe[] = [
   { id: "r_steak", out: "steak", qty: 1, cost: { bigmeat: 1, wood: 1 }, time: 30, station: "campfire", skill: "survival" },
   { id: "r_stew", out: "stew", qty: 2, cost: { bigmeat: 1, herb: 1, water: 1, wood: 1 }, time: 45, station: "campfire", skill: "survival" },
   { id: "r_medkit", out: "medkit", qty: 1, cost: { bandage: 2, salve: 1, herb: 2 }, time: 60, station: "hospital", skill: "medicine" },
+  { id: "r_ragcap", out: "ragcap", qty: 1, cost: { cloth: 2 }, time: 20, skill: "crafting" },
+  { id: "r_footwraps", out: "footwraps", qty: 1, cost: { cloth: 2 }, time: 20, skill: "crafting" },
+  { id: "r_hidehood", out: "hidehood", qty: 1, cost: { hide: 2, cloth: 1 }, time: 45, station: "workbench", skill: "crafting" },
+  { id: "r_hideboots", out: "hideboots", qty: 1, cost: { hide: 2, cloth: 1 }, time: 45, station: "workbench", skill: "crafting" },
   { id: "r_leather", out: "leather", qty: 1, cost: { hide: 4, cloth: 2 }, time: 90, station: "workbench", skill: "crafting" },
   { id: "r_trap", out: "trap", qty: 1, cost: { wood: 3, scrap: 3, wire: 1 }, time: 45, station: "workbench", skill: "crafting" },
   { id: "r_spear", out: "spear", qty: 1, cost: { wood: 4, scrap: 5, wire: 1 }, time: 90, station: "workbench", skill: "crafting" },
@@ -219,12 +236,12 @@ export interface Quest { id: string; name: string; desc: string; done: (s: impor
 
 // ---------- bar «Roostes Kruus» (in the ruins) ----------
 export const BAR_REGION = "ruins";
-export const BAR_BUY: Record<string, number> = { dirtywater: 1, water: 4, can: 6, cooked: 8, bandage: 6, stew: 15, salve: 12, antirad: 25, cloth: 3, wire: 5, meat: 4 };
+export const BAR_BUY: Record<string, number> = { dirtywater: 1, water: 4, can: 6, cooked: 8, bandage: 6, stew: 15, salve: 12, antirad: 25, scraphelm: 30, steelboots: 35, scrapvest: 60, cloth: 3, wire: 5, meat: 4 };
 // item -> [units per sale, caps paid]
 export const BAR_SELL: Record<string, [number, number]> = {
   scrap: [2, 1], wood: [3, 1], stone: [3, 1], cloth: [1, 1], wire: [1, 2], hide: [1, 2], ore: [1, 2], herb: [2, 1],
   roach: [3, 1], frog: [2, 1], meat: [1, 2], bigmeat: [1, 4], fish: [1, 2], berries: [3, 1], dirtywater: [3, 1],
-  crystal: [1, 12], core: [1, 20], rune: [1, 15], knife: [1, 2], rags: [1, 1], club: [1, 5], stonetool: [1, 4],
+  crystal: [1, 12], core: [1, 20], rune: [1, 15], knife: [1, 2], rags: [1, 1], ragcap: [1, 1], footwraps: [1, 1], hidehood: [1, 3], hideboots: [1, 3], scraphelm: [1, 10], steelboots: [1, 12], minerhelm: [1, 15], club: [1, 5], stonetool: [1, 4],
 };
 export interface Contract { id: string; name: string; icon: string; kind: "deliver" | "stat"; item?: string; stat?: "kills" | "gathered" | "explored" | "fished" | "crafted"; n: number; cash: number; xp: number }
 export const CONTRACT_POOL: Contract[] = [
