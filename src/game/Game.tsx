@@ -1,3 +1,4 @@
+import { keepBestPath } from "./lore";
 import { AFFIX, RARITY, relicName, scrapRelic, wearRelic, wornRelic, type AffixKey, type Relic } from "./progress";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CODEX, CODEX_FINAL, PET_KINDS, ENEMIES, EVENTS, ITEMS, NPCS, RECIPES, REGIONS, SKILLS, STRUCTURES, LORE, applyTekstid, type ItemType, type SkillId } from "./data";
@@ -44,12 +45,16 @@ type Tab = "today" | "exp" | "world" | "base" | "map" | "inv" | "gear" | "craft"
 const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: "today", icon: "☀️", label: "Täna" }, { id: "exp", icon: "🧭", label: "Retked" }, { id: "world", icon: "🌍", label: "Maailm" },
   { id: "base", icon: "🏠", label: "Baas" }, { id: "map", icon: "🗺️", label: "Kaart" },
-  { id: "inv", icon: "🎒", label: "Inventar" }, { id: "gear", icon: "⚔️", label: "Varustus" },
+  { id: "inv", icon: "🎒", label: "Inventar" }, { id: "gear", icon: "🧍", label: "Tegelane" },
   { id: "craft", icon: "🔨", label: "Crafting" }, { id: "quests", icon: "📖", label: "Ülesanded" },
-  { id: "npc", icon: "👥", label: "NPC-d" }, { id: "pet", icon: "🐾", label: "Lemmik" }, { id: "bar", icon: "🍺", label: "Baar" }, { id: "skills", icon: "⭐", label: "Oskused" },
-  { id: "ach", icon: "🏆", label: "Saavutused" }, { id: "stats", icon: "📊", label: "Statistika" }, { id: "log", icon: "📜", label: "Päevik" },
+  { id: "npc", icon: "👥", label: "NPC-d" }, { id: "pet", icon: "🐾", label: "Lemmik" }, { id: "bar", icon: "🍺", label: "Baar" },
+  { id: "stats", icon: "📊", label: "Statistika" }, { id: "log", icon: "📜", label: "Päevik" },
   { id: "online", icon: "🌐", label: "Mitmikmäng" }, { id: "settings", icon: "⚙️", label: "Seaded" },
 ];
+
+// Varustus, Oskuspuu and Saavutused share one menu button ("Tegelane") with sub-tabs.
+const HERO_TABS: { id: Tab; label: string }[] = [{ id: "gear", label: "⚔️ Varustus" }, { id: "skills", label: "⭐ Oskuspuu" }, { id: "ach", label: "🏆 Saavutused" }];
+const isHeroTab = (t: Tab) => t === "gear" || t === "skills" || t === "ach";
 
 const costText = (c: Record<string, number>) => Object.entries(c).map(([k, v]) => `${ITEMS[k].icon}${v}`).join(" ");
 const fmt = (sec: number) => (sec >= 60 ? `${Math.floor(sec / 60)}m ${sec % 60 ? (sec % 60) + "s" : ""}` : `${sec}s`);
@@ -93,7 +98,8 @@ export default function Game() {
   useEffect(() => {
     if (!user) return;
     let id: ReturnType<typeof setInterval> | undefined; let alive = true;
-    const push = () => ref.current && syncOnline(user, ref.current, clock(ref.current).day).catch(() => {});
+    // Only the visible tab uploads; a forgotten background tab/device must not overwrite newer progress.
+    const push = () => ref.current && document.visibilityState === "visible" && syncOnline(user, ref.current, clock(ref.current).day).catch(() => {});
     (async () => {
       let cloud: GameState | null;
       try { cloud = await fetchCloudSave(user); } catch { if (alive) id = setInterval(push, 30000); return; } // read failed: don't prompt or overwrite right away
@@ -103,10 +109,10 @@ export default function Game() {
       const synced = localStorage.getItem(syncedKey) === "1";
       if (cloud && local && !synced) {
         // First time on this device: take the server save silently (it is the account's progress).
-        ref.current = cloud; save(cloud); setS({ ...cloud });
+        keepBestPath(cloud, local); ref.current = cloud; save(cloud); setS({ ...cloud });
       } else if (cloud && local && cloud.lastTick > local.lastTick + 60_000) {
         // Played elsewhere since: newer server save wins.
-        ref.current = cloud; save(cloud); setS({ ...cloud });
+        keepBestPath(cloud, local); ref.current = cloud; save(cloud); setS({ ...cloud });
       } else if (!cloud && !synced) {
         // Brand-new account: start clean, without asking.
         const g = newGame(); ref.current = g; save(g); setS({ ...g });
@@ -114,7 +120,7 @@ export default function Game() {
       localStorage.setItem(syncedKey, "1");
       push(); id = setInterval(push, 30000);
     })();
-    const onHide = () => { if (document.visibilityState === "hidden") push(); };
+    const onHide = () => { if (document.visibilityState === "hidden" && ref.current) syncOnline(user, ref.current, clock(ref.current).day).catch(() => {}); };
     document.addEventListener("visibilitychange", onHide);
     return () => { alive = false; if (id) clearInterval(id); document.removeEventListener("visibilitychange", onHide); };
   }, [user]);
@@ -216,7 +222,7 @@ export default function Game() {
       <div className="flex flex-1 flex-col gap-2 md:flex-row">
         <nav aria-label="Mängu menüü" className="px-panel flex shrink-0 gap-1 overflow-x-auto p-1 md:w-44 md:flex-col md:overflow-visible">
           {TABS.map((t) => (
-            <button key={t.id} title={t.label} aria-label={t.label} aria-current={tab === t.id ? "page" : undefined} onClick={() => setTab(t.id)} className={`flex min-h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded px-2 text-left transition-colors hover:bg-muted ${tab === t.id ? "bg-muted text-primary" : "text-muted-foreground"}`}>
+            <button key={t.id} title={t.label} aria-label={t.label} aria-current={(t.id === "gear" ? isHeroTab(tab) : tab === t.id) ? "page" : undefined} onClick={() => setTab(t.id === "gear" && isHeroTab(tab) ? tab : t.id)} className={`flex min-h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded px-2 text-left transition-colors hover:bg-muted ${(t.id === "gear" ? isHeroTab(tab) : tab === t.id) ? "bg-muted text-primary" : "text-muted-foreground"}`}>
               <span aria-hidden="true" className="w-6 shrink-0 text-center">{t.icon}</span><span className="hidden sm:inline">{t.label}</span>
             </button>
           ))}
@@ -239,6 +245,11 @@ export default function Game() {
           {toast && <div className="px-panel shake border-destructive px-3 py-2 text-destructive">⚠ {toast}</div>}
 
           <section key={tab} className="fadein px-panel flex-1 p-3">
+            {isHeroTab(tab) && (
+              <div className="mb-3 flex flex-wrap gap-1" role="tablist" aria-label="Tegelane">
+                {HERO_TABS.map((h) => <button key={h.id} role="tab" aria-selected={tab === h.id} className={`px-btn ${tab === h.id ? "px-btn-active" : ""}`} onClick={() => setTab(h.id)}>{h.label}</button>)}
+              </div>
+            )}
             {tab === "today" && <TodayTab s={s} mut={mut} go={setTab} />}
             {tab === "exp" && <ExpTab s={s} mut={mut} />}
             {tab === "world" && <WorldTab s={s} mut={mut} onNgp={(g) => { ref.current = g; save(g); setS({ ...g }); setTab("today"); }} />}

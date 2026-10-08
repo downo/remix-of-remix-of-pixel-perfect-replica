@@ -17,3 +17,13 @@ describe("secrets", () => {
     expect(exploreSecrets(s)).toBe(true); expect(s.secrets).toContain("sec_cache");
   });
 });
+describe("Tuhkade tee save merge", () => {
+  it("keeps the higher step count when a server save replaces the local one", async () => {
+    const { keepBestPath } = await import("../lore");
+    const cloud = newGame(); cloud.path = { n: 2, last: "2026-10-01" };
+    const local = newGame(); local.path = { n: 5, last: "2026-10-08" };
+    keepBestPath(cloud, local); expect(cloud.path?.n).toBe(5);
+    const older = newGame(); older.path = { n: 1, last: "2026-09-01" };
+    keepBestPath(cloud, older); expect(cloud.path?.n).toBe(5);
+  });
+});
