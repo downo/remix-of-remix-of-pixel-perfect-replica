@@ -719,7 +719,7 @@ export function tick(s: GameState, now = Date.now()) {
       s.stats.raids++;
       if (power > def && atCamp && !s.combat && !away) {
         const foe = c.day < 10 ? "ratdog" : c.day < 25 ? "wolf" : "raider";
-        startCombat(s, foe); if (s.combat) s.combat.raid = power;
+        startCombat(s, foe); const cb = s.combat as GameState["combat"]; if (cb) cb.raid = power;
         log(s, "🚨 ÖINE RÜNNAK! Mutandid ründavad baasi — võitle! Võit päästab ehitised, põgenemine laseb neil baasi rüüstata.", "bad");
       } else if (power > def) {
         applyRaid(s, power);
