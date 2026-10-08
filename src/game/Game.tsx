@@ -1,3 +1,4 @@
+import { keepBestPath } from "./lore";
 import { AFFIX, RARITY, relicName, scrapRelic, wearRelic, wornRelic, type AffixKey, type Relic } from "./progress";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CODEX, CODEX_FINAL, PET_KINDS, ENEMIES, EVENTS, ITEMS, NPCS, RECIPES, REGIONS, SKILLS, STRUCTURES, LORE, applyTekstid, type ItemType, type SkillId } from "./data";
