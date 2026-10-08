@@ -1,3 +1,4 @@
+import { factionBonus } from "./factions";
 // Character perks, rare relics (items with random affixes) and multi-stage expeditions.
 import { ITEMS, REGIONS } from "./data";
 import { territoryBonus } from "./world";
@@ -118,14 +119,14 @@ export const wornRelic = (s: GameState) => (s.relics || []).find((r) => r.uid ==
 
 /** Summed bonuses from perks and the worn relic. Used by engine formulas. */
 export function bonus(s: GameState) {
-  const a = wornRelic(s)?.affixes || {}; const t = territoryBonus(s);
+  const a = wornRelic(s)?.affixes || {}; const t = territoryBonus(s); const fb = factionBonus(s);
   return {
-    dmg: (hasPerk(s, "f1") ? 2 : 0) + (hasPerk(s, "f4") ? 3 : 0) + (a.dmg || 0) + t.dmg,
-    def: (hasPerk(s, "f2") ? 2 : 0) + (hasPerk(s, "f5") ? 4 : 0) + (hasPerk(s, "u4") ? 3 : 0) + (a.def || 0) + t.def,
-    gather: (hasPerk(s, "s1") ? 0.15 : 0) + (hasPerk(s, "s2") ? 0.15 : 0) + (hasPerk(s, "s4") ? 0.2 : 0) + (hasPerk(s, "u5") ? 0.1 : 0) + (a.gather || 0) / 100 + t.gather,
-    xp: (hasPerk(s, "w1") ? 0.1 : 0) + (hasPerk(s, "w4") ? 0.1 : 0) + (hasPerk(s, "u5") ? 0.1 : 0) + (a.xp || 0) / 100 + t.xp,
+    dmg: (hasPerk(s, "f1") ? 2 : 0) + (hasPerk(s, "f4") ? 3 : 0) + (a.dmg || 0) + t.dmg + fb.dmg,
+    def: (hasPerk(s, "f2") ? 2 : 0) + (hasPerk(s, "f5") ? 4 : 0) + (hasPerk(s, "u4") ? 3 : 0) + (a.def || 0) + t.def + fb.def,
+    gather: (hasPerk(s, "s1") ? 0.15 : 0) + (hasPerk(s, "s2") ? 0.15 : 0) + (hasPerk(s, "s4") ? 0.2 : 0) + (hasPerk(s, "u5") ? 0.1 : 0) + (a.gather || 0) / 100 + t.gather + fb.gather,
+    xp: (hasPerk(s, "w1") ? 0.1 : 0) + (hasPerk(s, "w4") ? 0.1 : 0) + (hasPerk(s, "u5") ? 0.1 : 0) + (a.xp || 0) / 100 + t.xp + fb.xp,
     needs: (hasPerk(s, "u1") ? 0.15 : 0) + (hasPerk(s, "u3") ? 0.15 : 0),
-    heal: (hasPerk(s, "f3") ? 8 : 0) + (hasPerk(s, "f5") ? 6 : 0) + (hasPerk(s, "u2") ? 5 : 0) + (a.heal || 0),
+    heal: (hasPerk(s, "f3") ? 8 : 0) + (hasPerk(s, "f5") ? 6 : 0) + (hasPerk(s, "u2") ? 5 : 0) + (a.heal || 0) + fb.heal,
   };
 }
 

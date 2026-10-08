@@ -11,8 +11,8 @@ const costStr = (c: Record<string, number>) => Object.entries(c).map(([k, v]) =>
 export interface Faction { id: string; name: string; icon: string; desc: string; wants: Record<string, number>; rival: string }
 export const FACTIONS: Faction[] = [
   { id: "settlers", name: "Asunikud", icon: "🏘️", desc: "Ehitavad uut elu. Vajavad ehitusmaterjali.", wants: { wood: 8, stone: 6 }, rival: "order" },
-  { id: "wanderers", name: "Rändurid", icon: "🐫", desc: "Kaupmehed ja teeotsijad. Hindavad kaupa.", wants: { scrap: 6, cloth: 3 }, rival: "settlers" },
-  { id: "order", name: "Koidiku Ordu", icon: "🔺", desc: "Tahavad Lõhet uurida, mitte sulgeda.", wants: { crystal: 1, ore: 2 }, rival: "wanderers" },
+  { id: "wanderers", name: "Rändurid", icon: "🐫", desc: "Kaupmehed ja teeotsijad. Hindavad kaupa.", wants: { scrap: 6, cloth: 3 }, rival: "order" },
+  { id: "order", name: "Koidiku Ordu", icon: "🔺", desc: "Tahavad Lõhet uurida, mitte sulgeda.", wants: { crystal: 1, ore: 2 }, rival: "settlers" },
 ];
 export const REP_MIN = -500, REP_MAX = 2500;
 export const RANKS = [
