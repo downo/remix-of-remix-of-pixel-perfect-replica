@@ -674,10 +674,11 @@ export function tick(s: GameState, now = Date.now()) {
   if (offlineGap && !atCamp && !s.combat) {
     const before = s.hp; s.hp = Math.max(1, s.hp - dt * 0.012);
     const lost = Math.round(before - s.hp);
-    const st = s as GameState & { awayMsgAt?: number };
-    // Only one note per real absence: at least 1 HP lost and no note in the last 30 min.
-    if (lost >= 1 && dt > 120 && now - (st.awayMsgAt || 0) > 30 * 60_000) {
-      st.awayMsgAt = now;
+    const st = s as GameState & { awayNoticed?: boolean };
+    // Exactly one note per absence: fires once, resets when the player is active again.
+    if (!away) st.awayNoticed = false;
+    else if (lost >= 1 && dt > 120 && !st.awayNoticed) {
+      st.awayNoticed = true;
       log(s, `🌑 Olid eemal väljas — kaotasid ${lost} HP. Enne lahkumist mine baasi ja vajuta «Jää baasi».`, "bad");
     }
   }
