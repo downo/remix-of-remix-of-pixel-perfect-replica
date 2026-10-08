@@ -67,6 +67,13 @@ function useInputTracker() {
     return () => { ev.forEach((e) => window.removeEventListener(e, f)); document.removeEventListener("visibilitychange", vis); };
   }, []);
 }
+// Which ambient scene plays in each region.
+const SCENE_FOR: Record<string, Scene> = {
+  camp: "camp", forest: "forest", flooded: "water", city: "city", ruins: "ruins", magic: "magic",
+  mine: "depths", depths1: "depths", depths2: "depths", depths3: "depths",
+  desert: "waste", radiation: "waste", industrial: "waste", mountains: "waste",
+};
+
 export default function Game() {
   useInputTracker();
   const [s, setS] = useState<GameState | null>(null);
@@ -147,6 +154,34 @@ export default function Game() {
       setTimeout(() => setNotes((n) => n.filter((x) => x.t !== e.t)), 5000);
     }
   }, [lastLog]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Impact feedback: the screen shakes and flashes when you take damage, and puffs dust when you kill something.
+  const [impact, setImpact] = useState<{ k: "dmg" | "dust"; n: number } | null>(null);
+  const prevHp = useRef<number | undefined>(undefined);
+  const prevKills = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (!s) return;
+    const hp = prevHp.current; const kills = prevKills.current;
+    prevHp.current = s.hp; prevKills.current = s.kills;
+    if (hp === undefined || kills === undefined) return;
+    if (s.hp < hp - 0.5) setImpact({ k: "dmg", n: Date.now() });
+    else if (s.kills > kills) setImpact({ k: "dust", n: Date.now() });
+  }, [s?.hp, s?.kills]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!impact) return; const t = setTimeout(() => setImpact(null), 550); return () => clearTimeout(t); }, [impact]);
+
+  // Ambient sound follows where you are; the base plays a slow melody that gets slower at night.
+  const isNight = s ? clock(s).night : false;
+  const [prefsTick, setPrefsTick] = useState(0);
+  useEffect(() => {
+    const f = () => setPrefsTick((x) => x + 1);
+    window.addEventListener("tuhk-prefs", f);
+    return () => { window.removeEventListener("tuhk-prefs", f); setScene("off"); };
+  }, []);
+  useEffect(() => {
+    if (!s) return;
+    const sc: Scene = tab === "bar" ? "bar" : SCENE_FOR[s.region] ?? "waste";
+    setScene(sc, { music: sc === "camp", night: isNight });
+  }, [s?.region, tab, isNight, prefsTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!s) return <div className="flex min-h-screen items-center justify-center px-title text-primary glow">LAADIN<span className="blink">_</span></div>;
 
@@ -1068,6 +1103,7 @@ function loadPrefs(): Prefs {
 function applyPrefs(p: Prefs) {
   const el = document.documentElement;
   el.dataset.text = p.text; el.dataset.contrast = p.contrast; el.dataset.motion = p.motion; el.dataset.theme = p.theme;
+  try { window.dispatchEvent(new Event("tuhk-prefs")); } catch { /* no window (SSR) */ }
 }
 
 function A11ySettings() {
