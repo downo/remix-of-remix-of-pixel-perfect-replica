@@ -2,6 +2,7 @@
 import { ITEMS, NPCS } from "./data";
 import { add, clock, gainXp, gameLog as log, has, newGame, type GameState } from "./engine";
 import { giveRelic, makeRelic } from "./progress";
+import { repAction } from "./factions";
 
 const pay = (s: GameState, c: Record<string, number>) => Object.entries(c).forEach(([k, v]) => add(s, k, -v));
 const costStr = (c: Record<string, number>) => Object.entries(c).map(([k, v]) => `${ITEMS[k]?.icon ?? k}${v}`).join(" ");
@@ -13,33 +14,36 @@ export const FACTIONS: Faction[] = [
   { id: "wanderers", name: "Rändurid", icon: "🐫", desc: "Kaupmehed ja teeotsijad. Hindavad kaupa.", wants: { scrap: 6, cloth: 3 }, rival: "settlers" },
   { id: "order", name: "Koidiku Ordu", icon: "🔺", desc: "Tahavad Lõhet uurida, mitte sulgeda.", wants: { crystal: 1, ore: 2 }, rival: "wanderers" },
 ];
+export const REP_MIN = -500, REP_MAX = 2500;
 export const RANKS = [
-  { at: 0, name: "Võõras" }, { at: 20, name: "Tuttav", reward: { cash: 20 } }, { at: 50, name: "Liitlane", reward: { cash: 50, bandage: 3 } },
-  { at: 100, name: "Vend/Õde", reward: { cash: 100 }, relic: true }, { at: 200, name: "Legend", reward: { cash: 200 }, relic: true },
+  { at: -500, name: "Vannutatud vaenlane" }, { at: -100, name: "Vaenlane" }, { at: 0, name: "Võõras" },
+  { at: 100, name: "Tuttav", reward: { cash: 30 } }, { at: 250, name: "Sõber", reward: { cash: 60, bandage: 3 } },
+  { at: 500, name: "Liitlane", reward: { cash: 120 }, relic: true }, { at: 1000, name: "Austatud", reward: { cash: 250 }, relic: true },
+  { at: 2000, name: "Fraktsiooni meister", reward: { cash: 500 }, relic: true },
 ] as const;
 export const repOf = (s: GameState, f: string) => s.rep?.[f] || 0;
 export const rankOf = (rep: number) => [...RANKS].reverse().find((r) => rep >= r.at) ?? RANKS[0];
 export function addRep(s: GameState, f: string, n: number) {
   s.rep = s.rep || {}; s.rankClaimed = s.rankClaimed || {};
   const before = rankOf(repOf(s, f));
-  s.rep[f] = Math.max(-100, repOf(s, f) + n);
+  s.rep[f] = Math.max(REP_MIN, Math.min(REP_MAX, repOf(s, f) + n));
   const after = rankOf(repOf(s, f)); const fac = FACTIONS.find((x) => x.id === f)!;
-  if (after.at > before.at && !(s.rankClaimed[f] || []).includes(after.at)) {
+  if (after.at > before.at && after.at > 0 && !(s.rankClaimed[f] || []).includes(after.at)) {
     s.rankClaimed[f] = [...(s.rankClaimed[f] || []), after.at];
     if ("reward" in after) Object.entries(after.reward).forEach(([k, v]) => add(s, k, v));
     if ("relic" in after && after.relic) giveRelic(s, makeRelic(0.3));
     log(s, `${fac.icon} ${fac.name}: oled nüüd «${after.name}»!`, "good");
-  }
+  } else if (after.at < before.at) log(s, `${fac.icon} ${fac.name}: sinu maine langes — «${after.name}».`, "bad");
 }
-/** Helping one faction annoys its rival a little — choices matter. */
+/** Helping a faction once per day. Allies are pleased, enemies are annoyed (see factions.ts). */
 export function donate(s: GameState, f: string): string | null {
   const fac = FACTIONS.find((x) => x.id === f); if (!fac) return "Tundmatu.";
   const day = clock(s).day;
   if (s.donated?.[f] === day) return "Täna juba aitasid neid. Tule homme.";
   if (!has(s, fac.wants)) return `Vaja: ${costStr(fac.wants)}`;
   pay(s, fac.wants); s.donated = { ...(s.donated || {}), [f]: day };
-  addRep(s, f, 10); addRep(s, fac.rival, -3); gainXp(s, 20);
-  log(s, `${fac.icon} Aitasid: ${fac.name} +10 mainet (rivaal −3).`, "good");
+  repAction(s, f, 25); gainXp(s, 20);
+  log(s, `${fac.icon} Aitasid: ${fac.name} +25 mainet.`, "good");
   return null;
 }
 
@@ -118,7 +122,7 @@ export const enemyScale = (s: GameState) => 1 + (s.ngp || 0) * 0.3 + worldEventF
 /** Restart the story with stronger enemies, keeping perks, relics, codex, achievements, reputation and collections. */
 export function startNewGamePlus(s: GameState): GameState {
   const g = newGame();
-  const keep = { perks: s.perks, relics: s.relics, charm: s.charm, codex: s.codex, ach: s.ach, rep: s.rep, rankClaimed: s.rankClaimed, seen: s.seen, collDone: s.collDone, level: s.level, maxHp: s.maxHp, stats: s.stats, kills: s.kills, deaths: s.deaths };
+  const keep = { perks: s.perks, relics: s.relics, charm: s.charm, codex: s.codex, ach: s.ach, rep: s.rep, rankClaimed: s.rankClaimed, facRel: s.facRel, seen: s.seen, collDone: s.collDone, level: s.level, maxHp: s.maxHp, stats: s.stats, kills: s.kills, deaths: s.deaths };
   Object.assign(g, keep, { ngp: (s.ngp || 0) + 1, hp: s.maxHp, tut: true });
   add(g, "cash", 50);
   log(g, `🔁 UUS MÄNG+ (${g.ngp}). Ärkad taas silla all — aga sa mäletad. Vaenlased on ${Math.round((enemyScale(g) - 1) * 100)}% tugevamad.`, "lore");
