@@ -671,7 +671,16 @@ export function tick(s: GameState, now = Date.now()) {
     else if (!bad && s.warn.includes(k)) s.warn = s.warn.filter((x) => x !== k);
   }
   let drain = 0;
-  if (offlineGap && !atCamp && !s.combat) { s.hp = Math.max(1, s.hp - dt * 0.012); log(s, "🌑 Jäid eemal olles väljas ööbima — said kannatada. Mine järgmine kord enne lahkumist baasi ja vajuta «Jää baasi».", "bad"); }
+  if (offlineGap && !atCamp && !s.combat) {
+    const before = s.hp; s.hp = Math.max(1, s.hp - dt * 0.012);
+    const lost = Math.round(before - s.hp);
+    const st = s as GameState & { awayMsgAt?: number };
+    // Only one note per real absence: at least 1 HP lost and no note in the last 30 min.
+    if (lost >= 1 && dt > 120 && now - (st.awayMsgAt || 0) > 30 * 60_000) {
+      st.awayMsgAt = now;
+      log(s, `🌑 Olid eemal väljas — kaotasid ${lost} HP. Enne lahkumist mine baasi ja vajuta «Jää baasi».`, "bad");
+    }
+  }
   if (s.food <= 0) drain += 0.03; if (s.water <= 0) drain += 0.045; if (s.rad >= 80) drain += 0.05;
   if (drain && !s.combat) {
     const offline = away; // away from the game: never die from needs, stop at 1 HP
