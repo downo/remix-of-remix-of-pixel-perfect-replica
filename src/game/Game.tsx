@@ -59,9 +59,12 @@ const TYPE_LABEL: Record<ItemType, string> = {
 function useInputTracker() {
   useEffect(() => {
     const f = () => markInput();
+    // Hidden tab = player is away right now (no 5-minute wait).
+    const vis = () => { if (document.hidden) markInput(0); };
     const ev = ["pointerdown", "keydown", "touchstart", "wheel"];
     ev.forEach((e) => window.addEventListener(e, f, { passive: true }));
-    return () => ev.forEach((e) => window.removeEventListener(e, f));
+    document.addEventListener("visibilitychange", vis);
+    return () => { ev.forEach((e) => window.removeEventListener(e, f)); document.removeEventListener("visibilitychange", vis); };
   }, []);
 }
 export default function Game() {

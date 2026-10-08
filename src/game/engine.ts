@@ -624,9 +624,12 @@ export function resolveEvent(s: GameState, choice: string) {
 
 // ---------- tick (timestamp based, works offline) ----------
 // Last real player input (mouse/keys/touch). A tab left open but untouched counts as "away".
-let lastInput = Date.now();
+// Starts at 0: a freshly (re)loaded or browser-restored tab is "away" until the player actually touches it.
+let lastInput = 0;
 export const markInput = (t = Date.now()) => { lastInput = t; };
 export const IDLE_MS = 5 * 60_000;
+/** After coming back from an absence, needs cannot kill for this long — time to eat and drink. */
+export const RETURN_GRACE_MS = 3 * 60_000;
 export function tick(s: GameState, now = Date.now()) {
   updateTutorial(s);
   const dt = Math.min((now - s.lastTick) / 1000, 60 * 30); // cap 30 min offline drain
@@ -640,8 +643,11 @@ export function tick(s: GameState, now = Date.now()) {
   const wid = weatherFor(s, now).id;
   const offlineGap = dt > 15;
   const away = offlineGap || now - lastInput > IDLE_MS;
-  const st = s as GameState & { awayNoticed?: boolean };
+  const st = s as GameState & { awayNoticed?: boolean; wasAway?: boolean; graceUntil?: number };
   if (!away) st.awayNoticed = false; // active again → next absence may warn once more
+  if (away) st.wasAway = true;
+  else if (st.wasAway) { st.wasAway = false; st.graceUntil = now + RETURN_GRACE_MS; }
+  const protectedFromDeath = away || now < (st.graceUntil ?? 0);
   // "Jää baasi" button: safe rest while away — no harm, slow healing, flag consumed on return.
   if (away && s.restAway && s.region === "camp") {
     s.restAway = false;
@@ -688,12 +694,12 @@ export function tick(s: GameState, now = Date.now()) {
   }
   if (s.food <= 0) drain += 0.03; if (s.water <= 0) drain += 0.045; if (s.rad >= 80) drain += 0.05;
   if (drain && !s.combat) {
-    const offline = away; // away from the game: never die from needs, stop at 1 HP
+    // Away, or just came back (grace period): never die from needs, stop at 1 HP.
     s.hp -= dt * drain;
 
-    if (offline && s.hp < 1) {
+    if (protectedFromDeath && s.hp < 1) {
       s.hp = 1;
-      if (!st.awayNoticed) {
+      if (away && !st.awayNoticed) {
         st.awayNoticed = true;
         log(s, "🩸 Olid eemal ja su keha on kurnatud — ainult 1 HP alles! Söö, joo ja ravi end kohe.", "bad");
       }

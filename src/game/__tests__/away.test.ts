@@ -56,3 +56,20 @@ describe("respec", () => {
     g.inv.cash = 500; expect(respecPerks(g)).toBeNull(); expect(g.perks).toEqual([]); expect(g.inv.cash).toBe(0);
   });
 });
+import { RETURN_GRACE_MS } from "../engine";
+describe("no death loops while away", () => {
+  it("freshly loaded tab with no input never dies of thirst", () => {
+    markInput(0);
+    const g = newGame(); g.water = 0; g.food = 0; g.hp = 5;
+    for (let t = 0; t < 600; t++) tick(g, g.lastTick + 1_000);
+    expect(g.deaths).toBe(0); expect(g.hp).toBeGreaterThanOrEqual(1);
+  });
+  it("coming back at 1 HP with no water gives 3 minutes to drink", () => {
+    markInput(0);
+    const g = newGame(); g.region = "forest"; g.water = 0; g.food = 0; g.hp = 1;
+    tick(g, g.lastTick + 3600_000); // night away
+    markInput(g.lastTick); // back
+    for (let t = 0; t < RETURN_GRACE_MS / 1000 - 5; t++) tick(g, g.lastTick + 1_000);
+    expect(g.deaths).toBe(0);
+  });
+});
