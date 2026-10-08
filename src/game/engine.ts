@@ -822,19 +822,19 @@ export function pickEnding(s: GameState) {
 // ---------- base defense ----------
 // Mutants don't break buildings — they steal a share of the raw goods
 // they'd find in their own wasteland habitat (wood, stone, scrap, bones, hide, cloth).
-const RAID_STEALABLE = ["wood", "stone", "scrap", "bone", "hide", "cloth"];
+const RAID_STEALABLE = ["wood", "stone", "scrap", "hide", "cloth", "meat"];
 function applyRaid(s: GameState, power: number) {
   const def = baseDefense(s); const atCamp = s.region === "camp";
   const share = Math.min(0.35, 0.1 + (power - def) * 0.02); // 10–35% of each stealable pile
   const taken: string[] = [];
   for (const k of RAID_STEALABLE) {
-    const have = (s.inv[k] || 0) + (s.box?.[k] || 0);
+    const have = (s.inv[k] || 0) + (s.stash?.[k] || 0);
     if (!have) continue;
     const n = Math.max(1, Math.floor(have * share));
     const fromInv = Math.min(s.inv[k] || 0, n);
     if (fromInv) add(s, k, -fromInv);
     const rest = n - fromInv;
-    if (rest && s.box) { s.box[k] = Math.max(0, (s.box[k] || 0) - rest); if (!s.box[k]) delete s.box[k]; }
+    if (rest && s.stash) { s.stash[k] = Math.max(0, (s.stash[k] || 0) - rest); if (!s.stash[k]) delete s.stash[k]; }
     taken.push(`${n}× ${ITEMS[k]?.name || k}`);
   }
   if (atCamp && taken.length) s.hp = Math.max(1, s.hp - 4);
