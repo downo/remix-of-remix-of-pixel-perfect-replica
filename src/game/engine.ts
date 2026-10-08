@@ -14,7 +14,7 @@ export interface GameState {
   skills: Record<SkillId, number>;
   inv: Record<string, number>;
   equip: { weapon: string | null; armor: string | null; head: string | null; boots: string | null; tool: string | null };
-  region: string; discovered: string[];
+  region: string; discovered: string[]; restAway?: boolean;
   structures: Record<string, number>;
   action: Action | null;
   combat: { enemy: string; hp: number; defending: boolean; intent?: string; rage?: boolean; phase?: number; special?: boolean } | null;
@@ -171,8 +171,10 @@ export function gainXp(s: GameState, n: number, skill?: SkillId) {
   }
 }
 
+/** Diminishing returns on loot bonuses: every bonus above 1× counts half, total capped at 2.5×. */
+export const dampLoot = (mult: number) => (mult <= 1 ? mult : Math.min(2.5, 1 + (mult - 1) * 0.5));
 function rollLoot(s: GameState, table: [string, number, number][], mult = 1) {
-  const got: string[] = [];
+  const got: string[] = []; mult = dampLoot(mult);
   for (const [id, ch, max] of table) {
     if (rnd() < ch) {
       const n = Math.max(1, Math.round((1 + Math.floor(rnd() * max)) * mult));
@@ -254,7 +256,7 @@ function finishAction(s: GameState) {
   const reg = REGIONS[s.region];
   switch (a.kind) {
     case "gather": {
-      let mult = 1 + toolBonus(s) * 0.5 + (skillLevel(s.skills.survival) - 1) * 0.1;
+      let mult = 1 + toolBonus(s) * 0.3 + (skillLevel(s.skills.survival) - 1) * 0.05;
       if (hasCompanion(s)) mult *= 1.2;
       if (petIs(s, "ratdog")) mult *= 1.15;
       if (petMut(s, "lucky")) mult *= 1.1;
@@ -628,6 +630,14 @@ export function tick(s: GameState, now = Date.now()) {
   // sheltered at camp, much slower while away. Most hunger/thirst now comes from effort (see startAction).
   const wid = weatherFor(s, now).id;
   const away = dt > 15;
+  // "Jää baasi" button: safe rest while away — no harm, slow healing, flag consumed on return.
+  if (away && s.restAway && s.region === "camp") {
+    s.restAway = false;
+    s.hp = clamp(s.hp + dt * 0.03, 0, s.maxHp); s.energy = clamp(s.energy + dt * 0.05, 0, 100); s.rad = clamp(s.rad - dt * 0.02, 0, 100);
+    log(s, "🛏️ Puhkasid baasis turvaliselt. Keegi ei puutunud sind.", "good");
+    return;
+  }
+  if (!away && s.restAway) s.restAway = false;
   const resting = !s.action || s.action.kind === "rest";
   const calm = atCamp && resting ? 0.6 - Math.min(0.2, (s.structures.shelter || 0) * 0.05) : 1;
   const sea = seasonFor(s, now).id;
@@ -655,17 +665,19 @@ export function tick(s: GameState, now = Date.now()) {
     else if (!bad && s.warn.includes(k)) s.warn = s.warn.filter((x) => x !== k);
   }
   let drain = 0;
+  if (away && !atCamp && !s.combat) { s.hp = Math.max(1, s.hp - dt * 0.012); log(s, "🌑 Jäid eemal olles väljas ööbima — said kannatada. Mine järgmine kord enne lahkumist baasi ja vajuta «Jää baasi».", "bad"); }
   if (s.food <= 0) drain += 0.03; if (s.water <= 0) drain += 0.045; if (s.rad >= 80) drain += 0.05;
   if (drain && !s.combat) {
     const offline = dt > 15; // away from the game: never die from needs, stop at 1 HP
     s.hp -= dt * drain;
+
     if (offline && s.hp < 1) { s.hp = 1; log(s, "🩸 Olid eemal ja su keha on kurnatud — ainult 1 HP alles! Söö, joo ja ravi end kohe.", "bad"); }
     if (s.hp <= 0) {
       const why = s.water <= 0 ? "💧 Suri janu kätte." : s.food <= 0 ? "🍖 Suri nälga." : "☣️ Kiirgus tappis sind.";
       die(s, why); return;
     }
   }
-  else if (s.food > 50 && s.water > 50 && !s.combat) s.hp = clamp(s.hp + dt * 0.02, 0, s.maxHp);
+  else if (s.food > 50 && s.water > 50 && !s.combat && !(away && !atCamp)) s.hp = clamp(s.hp + dt * 0.02, 0, s.maxHp);
 
   // passive production (every 2 min game-time)
   const prodEvery = 120_000;
@@ -1097,3 +1109,12 @@ export function migrateSave(p: Partial<GameState>): GameState {
   }
 }
 export function wipe() { localStorage.removeItem(KEY); }
+
+/** Safe logout: only in camp, ends any action; the next away period is harmless. */
+export function stayAtBase(s: GameState): string | null {
+  if (s.region !== "camp") return "Pead olema baasis.";
+  if (s.combat) return "Lahingu ajal ei saa.";
+  s.action = null; s.restAway = true;
+  log(s, "🛏️ Jääd baasi puhkama. Võid nüüd mängust rahulikult lahkuda.", "good");
+  return null;
+}

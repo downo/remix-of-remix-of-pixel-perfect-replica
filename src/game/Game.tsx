@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CODEX, CODEX_FINAL, PET_KINDS, ENEMIES, EVENTS, ITEMS, NPCS, RECIPES, REGIONS, SKILLS, STRUCTURES, LORE, applyTekstid, type ItemType, type SkillId } from "./data";
 import {
   QUESTS, ACHIEVEMENTS, ENDINGS, hasB, dropItem, chestPut, chestTake, chestCap, chestLoad, armorDef, canStart, capacity, clock, combatAct, durationFor, equipItem, has, hasCompanion, load, loadSave, newGame,
-  resolveEvent, save, canTame, tame, feedPet, renamePet, releasePet, kennelSlots, kennelStore, kennelTake, kennelRelease, breedPets, BREED_COST, BREED_COOLDOWN, WEATHER_FX, baseDefense, raidPower, repairStructure, repairCost, startBoss, bossReady, bountyFor, trophyCount, weekKey, isMini, isBoss, intentText, PHASES, MINI_FOR_DANGER, dailyFor, dailyProgress, claimDaily, weeklyFor, weeklyContribution, sealRift, skillLevel, startAction, tick, useItem, weaponDmg, weatherFor, seasonFor, PET_MUTS, wipe, xpForLevel, type GameState,
+  resolveEvent, save, canTame, tame, feedPet, renamePet, releasePet, kennelSlots, kennelStore, kennelTake, kennelRelease, breedPets, BREED_COST, BREED_COOLDOWN, WEATHER_FX, baseDefense, raidPower, repairStructure, repairCost, startBoss, bossReady, bountyFor, trophyCount, weekKey, isMini, isBoss, intentText, PHASES, MINI_FOR_DANGER, dailyFor, dailyProgress, claimDaily, weeklyFor, weeklyContribution, sealRift, skillLevel, startAction, tick, useItem, weaponDmg, weatherFor, seasonFor, PET_MUTS, wipe, xpForLevel, type GameState, stayAtBase
 } from "./engine";
 import { OnlineTab, syncOnline, useOnlineUser, fetchCloudSave, ResetPassword, Account } from "./Online";
 import { blip } from "./sound";
@@ -358,6 +358,7 @@ function BaseTab({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean }) {
         <p className="mb-2 text-base text-muted-foreground">Kogumine, uurimine, jaht ja kalapüük on nüüd 🗺️ Kaardi all — seal, kus sa parajasti oled.</p>
         <div className="flex flex-wrap gap-2">
           {atCamp && <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "rest", s.structures.bed ? "🛏️ Magad voodis" : "😴 Puhkad"))}>{s.structures.bed ? "🛏️ Maga" : "😴 Puhka"} (1m)</button>}
+          {atCamp && <button disabled={!!s.combat} className="px-btn px-btn-primary" title="Vajuta enne mängust lahkumist — eemal olles ei juhtu sulle midagi" onClick={() => mut(stayAtBase)}>{s.restAway ? "🛏️ Puhkad baasis — võid lahkuda" : "🚪 Jää baasi (lahku mängust)"}</button>}
           {atCamp && !!s.structures.hospital && <button disabled={busy} className="px-btn" title="2 ravimtaime + 1 riie" onClick={() => mut((g) => startAction(g, "heal", "🏨 Ravid end haiglas"))}>🏨 Ravi haiglas ({fmt(durationFor(s, "heal"))})</button>}
           {!atCamp && <button disabled={busy} className="px-btn" onClick={() => mut((g) => startAction(g, "travel", "🚶 Naased laagrisse", "camp"))}>🏕️ Tagasi laagrisse</button>}
         </div>
