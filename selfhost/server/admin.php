@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $st = db()->prepare('SELECT id FROM users WHERE username=?'); $st->execute([trim((string)($_POST['user'] ?? ''))]);
     $id = $st->fetchColumn();
     if (!$id) $msg = 'Sellist kasutajat pole.';
-    elseif (($_POST['do'] ?? '') === 'delete') { db()->prepare('DELETE FROM users WHERE id=?')->execute([$id]); $msg = 'Konto kustutatud.'; }
+    elseif (($_POST['do'] ?? '') === 'delete') { save_delete($id); db()->prepare('DELETE FROM users WHERE id=?')->execute([$id]); $msg = 'Konto kustutatud.'; }
     elseif (strlen((string)($_POST['pw'] ?? '')) < 6) $msg = 'Uus parool peab olema vähemalt 6 märki.';
     else {
       db()->prepare('UPDATE users SET pass_hash=? WHERE id=?')->execute([password_hash($_POST['pw'], PASSWORD_DEFAULT), $id]);
