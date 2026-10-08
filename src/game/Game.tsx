@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CODEX, CODEX_FINAL, PET_KINDS, ENEMIES, EVENTS, ITEMS, NPCS, RECIPES, REGIONS, SKILLS, STRUCTURES, LORE, applyTekstid, type ItemType, type SkillId } from "./data";
 import {
   QUESTS, ACHIEVEMENTS, ENDINGS, hasB, dropItem, chestPut, chestTake, chestCap, chestLoad, armorDef, canStart, capacity, clock, combatAct, durationFor, equipItem, has, hasCompanion, load, loadSave, newGame,
-  resolveEvent, save, canTame, tame, feedPet, renamePet, releasePet, kennelSlots, kennelStore, kennelTake, kennelRelease, breedPets, BREED_COST, BREED_COOLDOWN, WEATHER_FX, baseDefense, raidPower, repairStructure, repairCost, startBoss, bossReady, bountyFor, trophyCount, weekKey, isMini, isBoss, intentText, PHASES, MINI_FOR_DANGER, dailyFor, dailyProgress, claimDaily, weeklyFor, weeklyContribution, sealRift, skillLevel, startAction, tick, useItem, weaponDmg, weatherFor, seasonFor, PET_MUTS, wipe, xpForLevel, type GameState, stayAtBase
+  resolveEvent, save, canTame, tame, feedPet, renamePet, releasePet, kennelSlots, kennelStore, kennelTake, kennelRelease, breedPets, BREED_COST, BREED_COOLDOWN, WEATHER_FX, baseDefense, raidPower, repairStructure, repairCost, startBoss, bossReady, bountyFor, trophyCount, weekKey, isMini, isBoss, intentText, PHASES, MINI_FOR_DANGER, dailyFor, dailyProgress, claimDaily, weeklyFor, weeklyContribution, sealRift, skillLevel, startAction, tick, useItem, weaponDmg, weatherFor, seasonFor, PET_MUTS, wipe, xpForLevel, type GameState, stayAtBase, markInput
 } from "./engine";
 import { OnlineTab, syncOnline, useOnlineUser, fetchCloudSave, ResetPassword, Account } from "./Online";
 import { blip } from "./sound";
@@ -55,6 +55,14 @@ const TYPE_LABEL: Record<ItemType, string> = {
   weapon: "relv", armor: "rüü", head: "müts", boots: "saapad", tool: "tööriist", rare: "haruldane",
 };
 
+function useInputTracker() {
+  useEffect(() => {
+    const f = () => markInput();
+    const ev = ["pointerdown", "keydown", "touchstart", "wheel"];
+    ev.forEach((e) => window.addEventListener(e, f, { passive: true }));
+    return () => ev.forEach((e) => window.removeEventListener(e, f));
+  }, []);
+}
 export default function Game() {
   const [s, setS] = useState<GameState | null>(null);
   const [tab, setTab] = useState<Tab>("today");
