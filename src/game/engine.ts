@@ -558,7 +558,7 @@ function die(s: GameState, cause: string) {
       const l = Math.ceil(s.inv[k] * 0.5); add(s, k, -l); if (l) lost.push(ITEMS[k].name);
     }
   }
-  s.hp = Math.round(s.maxHp * 0.5); s.energy = 40; s.food = Math.max(s.food, 30); s.water = Math.max(s.water, 30); s.rad = Math.min(s.rad, 30);
+  s.hp = Math.max(1, Math.round(s.maxHp * 0.3)); s.energy = 30; s.food = Math.max(s.food, 30); s.water = Math.max(s.water, 30); s.rad = 0;
   s.region = "camp";
   log(s, `💀 SA SURID. Ärkad uuesti laagris, kuid kaotasid pool ressurssidest${lost.length ? " (" + lost.slice(0, 5).join(", ") + ")" : ""}.`, "bad");
 }
@@ -634,7 +634,7 @@ export function tick(s: GameState, now = Date.now()) {
   updateTutorial(s);
   const dt = Math.min((now - s.lastTick) / 1000, 60 * 30); // cap 30 min offline drain
   s.lastTick = now;
-  if (dt <= 0) return;
+  if (dt <= 0 || s.lastDeath) return; // mäng ootab, kuni mängija vajutab „Ärka ellu"
   const surv = skillLevel(s.skills.survival);
   const slow = 1 - Math.min(0.4, (surv - 1) * 0.04);
   const atCamp = s.region === "camp";
