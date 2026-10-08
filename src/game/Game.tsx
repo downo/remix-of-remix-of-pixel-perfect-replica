@@ -43,13 +43,11 @@ function MeetPopup({ s }: { s: GameState }) {
 
 type Tab = "today" | "exp" | "world" | "base" | "map" | "inv" | "gear" | "craft" | "quests" | "npc" | "pet" | "bar" | "skills" | "ach" | "stats" | "log" | "online" | "settings";
 const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: "today", icon: "☀️", label: "Täna" }, { id: "exp", icon: "🧭", label: "Retked" }, { id: "world", icon: "🌍", label: "Maailm" },
-  { id: "base", icon: "🏠", label: "Baas" }, { id: "map", icon: "🗺️", label: "Kaart" },
-  { id: "inv", icon: "🎒", label: "Inventar" }, { id: "gear", icon: "🧍", label: "Tegelane" },
-  { id: "craft", icon: "🔨", label: "Crafting" }, { id: "quests", icon: "📖", label: "Ülesanded" },
-  { id: "npc", icon: "👥", label: "NPC-d" }, { id: "pet", icon: "🐾", label: "Lemmik" }, { id: "bar", icon: "🍺", label: "Baar" },
-  { id: "stats", icon: "📊", label: "Statistika" }, { id: "log", icon: "📜", label: "Päevik" },
-  { id: "online", icon: "🌐", label: "Mitmikmäng" }, { id: "settings", icon: "⚙️", label: "Seaded" },
+  { id: "today", icon: "☀️", label: "Täna" }, { id: "log", icon: "📜", label: "Päevik" }, { id: "quests", icon: "📖", label: "Ülesanded" },
+  { id: "gear", icon: "🧍", label: "Tegelane" }, { id: "inv", icon: "🎒", label: "Inventar" }, { id: "craft", icon: "🔨", label: "Crafting" },
+  { id: "base", icon: "🏠", label: "Baas" }, { id: "map", icon: "🗺️", label: "Kaart" }, { id: "exp", icon: "🧭", label: "Retked" }, { id: "world", icon: "🌍", label: "Maailm" },
+  { id: "npc", icon: "👥", label: "NPC-d" }, { id: "bar", icon: "🍺", label: "Baar" }, { id: "pet", icon: "🐾", label: "Lemmik" },
+  { id: "online", icon: "🌐", label: "Mitmikmäng" }, { id: "stats", icon: "📊", label: "Statistika" }, { id: "settings", icon: "⚙️", label: "Seaded" },
 ];
 
 // Varustus, Oskuspuu and Saavutused share one menu button ("Tegelane") with sub-tabs.
