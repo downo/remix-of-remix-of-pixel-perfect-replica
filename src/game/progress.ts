@@ -224,3 +224,13 @@ export function claimExpWeek(s: GameState): string | null {
   log(s, "🗓️ Nädala retked tehtud! +40 🪙, +150 XP ja eriline leid.", "good");
   return null;
 }
+
+/** Reset the skill tree for a fee; all spent points come back. */
+export const RESPEC_COST = 500;
+export function respecPerks(s: GameState): string | null {
+  if (!(s.perks || []).length) return "Sul pole veel ühtegi oskust.";
+  if ((s.inv.cash || 0) < RESPEC_COST) return `Vajad ${RESPEC_COST} 🪙.`;
+  s.inv.cash -= RESPEC_COST; s.perks = [];
+  log(s, `🔄 Oskuspuu nullitud (−${RESPEC_COST} 🪙). Kõik punktid on tagasi — vali uuesti.`, "good");
+  return null;
+}

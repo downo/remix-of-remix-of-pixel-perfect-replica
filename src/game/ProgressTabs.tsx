@@ -2,7 +2,7 @@ import { ITEMS, REGIONS } from "./data";
 import { clock, dailyFor, dailyProgress, QUESTS, seasonFor, weatherFor, weeklyContribution, weeklyFor, type GameState } from "./engine";
 import {
   AFFIX, BRANCHES, EXPEDITIONS, EXP_ENERGY, EXP_WEEK_GOAL, PERKS, RARITY, bonus, claimExpWeek, expAdvance, expAvailable, expRetreat, expWeekCount,
-  hasPerk, learnPerk, perkCost, perkBlocked, perkPoints, relicName, scrapRelic, startExpedition, wearRelic, type AffixKey, type Relic,
+  hasPerk, learnPerk, respecPerks, RESPEC_COST, perkCost, perkBlocked, perkPoints, relicName, scrapRelic, startExpedition, wearRelic, type AffixKey, type Relic,
 } from "./progress";
 import { PARDI_JUTUD } from "./tekstid";
 import { WorldEventLine } from "./WorldTab";
@@ -102,7 +102,9 @@ export function PerkAndRelics({ s, mut }: { s: GameState; mut: Mut }) {
     <div>
       <div className="mb-3 border-b border-[#2a2a2a] pb-3">
         <H>Oskuspuu — vabu punkte: <span className="text-[#e85d3a]">{perkPoints(s)}</span></H>
-        <p className="text-sm text-muted-foreground">Iga teine tase annab ühe punkti. Kõrgemad oskused maksavad rohkem (1–3 punkti). Kõike ei jõua — vali, milline ellujääja sinust saab.</p>
+        <p className="text-sm text-muted-foreground">Iga teine tase annab ühe punkti. Kõrgemad oskused maksavad rohkem (1–3 punkti). Kõike ei jõua — vali, milline ellujääja sinust saab. Oskused säilivad ka surma korral.</p>
+        <button disabled={!(s.perks || []).length || (s.inv.cash || 0) < RESPEC_COST} className="px-btn mt-2" title="Saad kõik kasutatud punktid tagasi"
+          onClick={() => { if (confirm(`Nullida oskuspuu ${RESPEC_COST} 🪙 eest? Kõik punktid tulevad tagasi.`)) mut(respecPerks); }}>🔄 Nulli oskused ({RESPEC_COST} 🪙)</button>
       </div>
       <div className="mb-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {BRANCHES.map((br) => { const c = BRANCH_COLOR[br.id]; return (
