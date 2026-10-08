@@ -18,6 +18,17 @@ describe("tab left open", () => {
     for (let t = 1; t <= 600; t++) tick(g, g.lastTick + 10_000); // 100 min of 10s ticks
     expect(g.hp).toBeGreaterThanOrEqual(1); expect(g.deaths).toBe(0);
   });
+  it("exactly one away notice per absence, new one after returning", () => {
+    const g = newGame(); g.region = "forest"; g.hp = 50;
+    const notices = () => g.log.filter((l) => l.text.includes("Olid eemal väljas")).length;
+    for (let t = 1; t <= 120; t++) tick(g, g.lastTick + 10_000); // 20 min away
+    expect(notices()).toBe(1);
+    markInput(g.lastTick); // back at the keyboard
+    for (let t = 1; t <= 5; t++) tick(g, g.lastTick + 10_000);
+    expect(notices()).toBe(1); // no new notice while active
+    for (let t = 1; t <= 60; t++) tick(g, g.lastTick + 10_000); // away again, 10 min
+    expect(notices()).toBe(2);
+  });
 });
 import { respecPerks } from "../progress";
 describe("respec", () => {
