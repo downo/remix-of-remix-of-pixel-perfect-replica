@@ -27,6 +27,6 @@ User picked (all options): story ending + boss, achievements, companion (Väike 
 - [x] Visuals + audio pass: sound engine (blips, per-region ambience, base music, log-line sounds), player portrait, night/weather overlays, journal icons, screen shake + dust impacts, button press feel, rift + clan pictures
 
 # Presentation refinement
-- [ ] Remove distracting background overlays and increase right-hand journal text.
-- [ ] Redesign equipment presentation without changing equipment rules.
-- [ ] Suggest ways to make factions more interesting.
+- [x] Remove distracting background overlays and increase right-hand journal text.
+- [x] Redesign equipment presentation without changing equipment rules.
+- [x] Suggest faction-specific missions, exclusive equipment and consequential alliances (ideas only).
