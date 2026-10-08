@@ -14,7 +14,7 @@ describe("away & loot", () => {
 import { markInput } from "../engine";
 describe("tab left open", () => {
   it("idle player with open tab never dies of thirst", () => {
-    const g = newGame(); g.water = 0; g.food = 0; g.hp = 5; markInput(g.lastTick);
+    const g = newGame(); g.water = 0; g.food = 0; g.hp = 50; markInput(g.lastTick);
     for (let t = 1; t <= 600; t++) tick(g, g.lastTick + 10_000); // 100 min of 10s ticks
     expect(g.hp).toBeGreaterThanOrEqual(1); expect(g.deaths).toBe(0);
   });
