@@ -677,7 +677,7 @@ export function tick(s: GameState, now = Date.now()) {
       die(s, why); return;
     }
   }
-  else if (s.food > 50 && s.water > 50 && !s.combat) s.hp = clamp(s.hp + dt * 0.02, 0, s.maxHp);
+  else if (s.food > 50 && s.water > 50 && !s.combat && !(away && !atCamp)) s.hp = clamp(s.hp + dt * 0.02, 0, s.maxHp);
 
   // passive production (every 2 min game-time)
   const prodEvery = 120_000;
