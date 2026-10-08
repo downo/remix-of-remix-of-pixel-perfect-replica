@@ -14,6 +14,8 @@ import { Knowledge } from "./LoreTabs";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
 import { Portrait, BASE_IMG, REGION_IMG, PLAYER_IMG } from "./portraits";
 import { TUTORIAL_STEPS } from "./tutorial";
+import { Button } from "@/components/ui/button";
+import { ArrowDownToLine, Shield, Swords } from "lucide-react";
 
 /** Shows a portrait card the moment the player meets a new survivor. */
 function MeetPopup({ s }: { s: GameState }) {
@@ -155,20 +157,6 @@ export default function Game() {
     }
   }, [lastLog]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Impact feedback: the screen shakes and flashes when you take damage, and puffs dust when you kill something.
-  const [impact, setImpact] = useState<{ k: "dmg" | "dust"; n: number } | null>(null);
-  const prevHp = useRef<number | undefined>(undefined);
-  const prevKills = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (!s) return;
-    const hp = prevHp.current; const kills = prevKills.current;
-    prevHp.current = s.hp; prevKills.current = s.kills;
-    if (hp === undefined || kills === undefined) return;
-    if (s.hp < hp - 0.5) setImpact({ k: "dmg", n: Date.now() });
-    else if (s.kills > kills) setImpact({ k: "dust", n: Date.now() });
-  }, [s?.hp, s?.kills]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!impact) return; const t = setTimeout(() => setImpact(null), 550); return () => clearTimeout(t); }, [impact]);
-
   // Ambient sound follows where you are; the base plays a slow melody that gets slower at night.
   const isNight = s ? clock(s).night : false;
   const [prefsTick, setPrefsTick] = useState(0);
@@ -198,15 +186,9 @@ export default function Game() {
 
   const c = clock(s); const w = weatherFor(s); const se = seasonFor(s); const reg = REGIONS[s.region];
   const busy = !canStart(s);
-  const WX_ON = ["rain", "ash", "fog", "crystal"];
-  const nightShade = c.night ? 0.6 : c.h >= 18 || c.h < 7 ? 0.3 : 0;
 
   return (
-    <div className={`mx-auto flex min-h-screen max-w-7xl flex-col gap-2 p-2 md:p-3 ${impact?.k === "dmg" ? "screen-hit" : ""}`}>
-      {impact && <div key={impact.k + impact.n} className={`impact impact-${impact.k}`} aria-hidden="true" />}
-      {nightShade > 0 && <div className="night-veil" style={{ opacity: nightShade }} aria-hidden="true" />}
-      {WX_ON.includes(w.id) && <div className={`wx wx-${w.id}`} aria-hidden="true" />}
-      {!WX_ON.includes(w.id) && se.id === "winter" && <div className="wx wx-snow" aria-hidden="true" />}
+    <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-2 p-2 md:p-3">
       <div className="pointer-events-none fixed right-2 top-2 z-50 flex w-80 max-w-[90vw] flex-col gap-1" aria-live="polite">
         {notes.map((n) => <div key={n.t} className={`px-panel fadein px-3 py-2 text-base ${n.type === "bad" ? "border-destructive text-destructive" : "border-primary text-primary"}`}>{n.text}</div>)}
       </div>
@@ -278,7 +260,7 @@ export default function Game() {
           </section>
         </main>
 
-        <aside className="px-panel p-3 text-[0.62em] md:w-80">
+        <aside className="px-panel p-3 text-[0.75em] leading-snug md:w-80">
           <h2 className="px-title mb-2 text-primary">&gt; Päevik</h2>
           <LogList s={s} n={18} />
         </aside>
@@ -651,30 +633,53 @@ function InvTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: s
 
 function GearTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: string) => void }) {
   const slots = [["head", "Müts", "🧢"], ["weapon", "Relv", "🗡️"], ["armor", "Rüü", "🛡️"], ["boots", "Saapad", "🥾"], ["tool", "Tööriist", "⛏️"]] as const;
+  const relic = wornRelic(s);
+  const equipped = slots.filter(([k]) => s.equip[k]).length + (relic ? 1 : 0);
   return (
-    <div>
-      <H>Varustus</H>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {slots.map(([k, l, ic]) => {
-          const id = s.equip[k]; const it = id ? ITEMS[id] : null;
-          const opts = Object.keys(s.inv).filter((x) => ITEMS[x]?.type === k);
+    <div className="min-w-0">
+      <div className="mb-4 flex items-center justify-between gap-2 border-b border-border pb-3">
+        <H>Varustus</H><span className="text-base text-muted-foreground">{equipped} / 6 kantud</span>
+      </div>
+      <div className="mb-5 grid grid-cols-[96px_minmax(0,1fr)] items-center gap-4 sm:grid-cols-[128px_minmax(0,1fr)]">
+        {PLAYER_IMG.tuhk && <img src={PLAYER_IMG.tuhk} alt="Tuhk" className="aspect-square w-full border-2 border-border object-cover" />}
+        <div className="min-w-0">
+          <h3 className="px-title mb-3 text-foreground">TUHK <span className="font-term text-base text-muted-foreground">· Tase {s.level}</span></h3>
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            <div className="flex items-center gap-2 text-accent"><Swords size={22} /><div><div className="text-base text-muted-foreground">Kahju</div><strong className="text-3xl font-normal">{weaponDmg(s)}</strong></div></div>
+            <div className="flex items-center gap-2 text-primary"><Shield size={22} /><div><div className="text-base text-muted-foreground">Kaitse</div><strong className="text-3xl font-normal">{armorDef(s)}</strong></div></div>
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {slots.map(([k, label, icon]) => {
+          const id = s.equip[k]; const item = id ? ITEMS[id] : null;
+          const options = Object.keys(s.inv).filter((x) => ITEMS[x]?.type === k && x !== id);
           return (
-            <div key={k} className="border-2 p-2">
-              <div className="px-title text-accent">{ic} {l}</div>
-              {it ? <div className="my-2 cursor-pointer text-xl hover:text-primary" onClick={() => onDetail(id!)}>{it.icon} {it.name}</div> : <div className="my-2 text-xl text-muted-foreground">— tühi —</div>}
-              {it && <div className="text-base text-muted-foreground">{it.dmg ? `Kahju ${it.dmg}` : it.def ? `Kaitse ${it.def}` : `Kogumine +${it.gather}`}</div>}
-              {it && <button className="px-btn mt-1" onClick={() => mut((g) => { g.equip[k] = null; })}>Võta ära</button>}
-              <div className="mt-2 flex flex-wrap gap-1">{opts.filter((o) => o !== id).map((o) => <button key={o} className="px-btn" onClick={() => mut((g) => equipItem(g, o))}>{ITEMS[o].icon}</button>)}</div>
-            </div>
+            <section key={k} className={`flex min-w-0 flex-col border bg-card p-3 ${item ? "border-primary/50" : "border-border"}`}>
+              <div className="mb-3 flex items-center justify-between gap-2"><h3 className="px-title text-muted-foreground">{label}</h3><span className={`text-sm ${item ? "text-primary" : "text-muted-foreground"}`}>{item ? "● KANTUD" : "○ TÜHI"}</span></div>
+              <div className="flex min-h-20 min-w-0 items-center gap-3">
+                <span className={`flex h-16 w-16 shrink-0 items-center justify-center border text-4xl ${item ? "border-primary/30 bg-primary/10" : "border-border bg-muted text-muted-foreground"}`}>{item?.icon ?? icon}</span>
+                <div className="min-w-0 flex-1">
+                  {item && id ? <Button variant="link" className="h-auto max-w-full justify-start whitespace-normal p-0 text-left font-term text-xl leading-tight" onClick={() => onDetail(id)}>{item.name}</Button> : <p className="text-lg text-muted-foreground">Varustamata</p>}
+                  {item && <p className="mt-1 text-base text-accent">{item.dmg ? `Kahju +${item.dmg}` : item.def ? `Kaitse +${item.def}` : `Kogumine +${item.gather}`}</p>}
+                </div>
+                {item && <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground" title="Võta ära" aria-label={`Võta ära: ${item.name}`} onClick={() => mut((g) => { g.equip[k] = null; })}><ArrowDownToLine /></Button>}
+              </div>
+              <div className="mt-3 border-t border-border pt-2">
+                <p className="mb-2 text-sm text-muted-foreground">SELJAKOTIS · {options.length}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {options.map((o) => <Button key={o} variant="outline" size="sm" className="h-auto min-h-8 max-w-full whitespace-normal text-left font-term text-base" title={ITEMS[o].desc} onClick={() => mut((g) => equipItem(g, o))}>{ITEMS[o].icon} {ITEMS[o].name}</Button>)}
+                  {!options.length && <span className="text-base text-muted-foreground">—</span>}
+                </div>
+              </div>
+            </section>
           );
         })}
-        {(() => { const r = wornRelic(s); return (
-          <div className="border-2 p-2">
-            <div className="px-title text-accent">📿 Talisman</div>
-            {r ? <><div className="my-2 text-xl"><span className={RARITY[r.rarity].color}>{RARITY[r.rarity].name}</span> {relicName(r)}</div><div className="text-base text-muted-foreground">{relicAffixes(r)}</div><button className="px-btn mt-1" onClick={() => mut((g) => wearRelic(g, null))}>Võta ära</button></> : <div className="my-2 text-xl text-muted-foreground">— tühi —</div>}
-          </div>); })()}
+        <section className={`flex min-w-0 flex-col border bg-card p-3 ${relic ? "border-magic/50" : "border-border"}`}>
+          <div className="mb-3 flex items-center justify-between gap-2"><h3 className="px-title text-muted-foreground">Talisman</h3><span className={`text-sm ${relic ? "text-magic" : "text-muted-foreground"}`}>{relic ? "● KANTUD" : "○ TÜHI"}</span></div>
+          <div className="flex min-h-20 items-center gap-3"><span className="flex h-16 w-16 shrink-0 items-center justify-center border border-magic/30 bg-magic/10 text-4xl">📿</span><div className="min-w-0 flex-1">{relic ? <><p className={`text-sm ${RARITY[relic.rarity].color}`}>{RARITY[relic.rarity].name}</p><p className="text-xl leading-tight">{relicName(relic)}</p><p className="mt-1 text-base text-magic">{relicAffixes(relic)}</p></> : <p className="text-lg text-muted-foreground">Varustamata</p>}</div>{relic && <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground" title="Võta ära" aria-label="Võta talisman ära" onClick={() => mut((g) => wearRelic(g, null))}><ArrowDownToLine /></Button>}</div>
+        </section>
       </div>
-      <p className="mt-3">⚔️ Kahju: <span className="text-primary">{weaponDmg(s)}</span> · 🛡️ Kaitse: <span className="text-primary">{armorDef(s)}</span></p>
     </div>
   );
 }
