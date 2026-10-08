@@ -198,23 +198,13 @@ export default function Game() {
         {notes.map((n) => <div key={n.t} className={`px-panel fadein px-3 py-2 text-base ${n.type === "bad" ? "border-destructive text-destructive" : "border-primary text-primary"}`}>{n.text}</div>)}
       </div>
       <MeetPopup s={s} />
-      {/* HUD */}
-      <header className="px-panel grid min-w-0 items-center gap-3 px-3 py-2 xl:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="flex min-w-0 items-center gap-2">
-          {PLAYER_IMG.tuhk && <img src={PLAYER_IMG.tuhk} alt="Sinu tegelane" loading="lazy" width={256} height={256} className="h-11 w-11 shrink-0 border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
-          <div className="min-w-0">
-            <h1 className="px-title text-primary glow">☢ TUHK</h1>
-            <div className="text-muted-foreground">Päev {c.day} | {c.label} {c.night ? "🌙" : "☀️"} · <span title={WEATHER_FX[w.id]}>{w.icon} {w.name}</span> · <span title={se.fx}>{se.icon} {se.name}</span></div>
-            <div className="text-base text-muted-foreground">{WEATHER_FX[w.id]} {se.fx}</div>
-          </div>
-        </div>
-        <div aria-label="Mängija näitajad" className="grid min-w-0 grid-cols-6 items-center gap-2 sm:gap-4 xl:w-[35rem]">
-        <Stat icon="❤️" v={s.hp} max={s.maxHp} cls="text-destructive" danger={s.hp < s.maxHp * 0.25} />
-        <Stat icon="⚡" v={s.energy} max={100} cls="text-primary" />
-        <Stat icon="🍖" v={s.food} max={100} cls="text-food" danger={s.food < 20} />
-        <Stat icon="💧" v={s.water} max={100} cls="text-water" danger={s.water < 20} />
-        <Stat icon="☣️" v={s.rad} max={100} cls="text-rad" danger={s.rad >= 65} />
-        <div className="min-w-0 text-right"><div className="px-title text-accent">LVL {s.level}</div><div className="text-muted-foreground text-base">{s.xp}/{xpForLevel(s.level)} XP</div></div>
+      {/* Pixel päis */}
+      <header className="px-head relative flex flex-wrap items-center gap-3 px-3 py-2">
+        {PLAYER_IMG.tuhk && <img src={PLAYER_IMG.tuhk} alt="Sinu tegelane" loading="lazy" width={256} height={256} className="h-12 w-12 shrink-0 border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
+        <h1 className="px-title text-primary glow">☢ TUHK</h1>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <span className="px-chip" title={WEATHER_FX[w.id]}>{w.icon} {w.name}</span>
+          <span className="px-chip" title={se.fx}>{se.icon} {se.name}</span>
         </div>
       </header>
 
@@ -305,15 +295,6 @@ export default function Game() {
   );
 }
 
-function Stat({ icon, v, max, cls, danger }: { icon: string; v: number; max: number; cls: string; danger?: boolean }) {
-  const p = Math.max(0, Math.min(100, (v / max) * 100));
-  return (
-    <div className={`min-w-0 w-full ${danger ? "danger-flash" : ""}`} title={danger ? "Ohtlikult madal!" : undefined}>
-      <div className="flex justify-between text-base"><span>{icon}</span><span>{Math.round(v)}</span></div>
-      <div className={`px-bar ${cls}`}><span style={{ width: `${p}%` }} /></div>
-    </div>
-  );
-}
 
 function ActionBar({ s }: { s: GameState }) {
   const a = s.action!; const now = Date.now();
