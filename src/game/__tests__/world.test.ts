@@ -3,10 +3,10 @@ import { newGame } from "../engine";
 import { donate, repOf, startNewGamePlus, enemyScale, worldEventFor } from "../world";
 
 describe("factions", () => {
-  it("helping gives +10 and rival -3, once per day", () => {
+  it("helping gives +25, the Order (at war) loses 10, once per day", () => {
     const s = newGame(); s.inv.wood = 20; s.inv.stone = 20;
     expect(donate(s, "settlers")).toBeNull();
-    expect(repOf(s, "settlers")).toBe(10); expect(repOf(s, "order")).toBe(-3);
+    expect(repOf(s, "settlers")).toBe(25); expect(repOf(s, "order")).toBe(-10);
     expect(donate(s, "settlers")).not.toBeNull();
   });
 });
