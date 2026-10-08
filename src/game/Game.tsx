@@ -11,6 +11,7 @@ import { blip, setScene, soundForLog, type Scene } from "./sound";
 import { BarTab } from "./Bar";
 import { WorldTab } from "./WorldTab";
 import { StoryQuests } from "./StoryQuests";
+import { STORY_QUESTS, qOpen, qStep } from "./quests";
 import { Knowledge } from "./LoreTabs";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
 import { Portrait, BASE_IMG, REGION_IMG, PLAYER_IMG } from "./portraits";
@@ -227,15 +228,36 @@ export default function Game() {
         </nav>
 
         <main className="flex min-w-0 flex-1 flex-col gap-2">
-          <div className="px-panel px-3 py-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="px-title text-accent">{reg.icon} {reg.name}</span>
-              <span className="text-muted-foreground">Oht: {"☠".repeat(reg.danger) || "turvaline"}</span>
+          <div className="px-panel grid gap-3 px-3 py-2 md:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="min-w-0 space-y-2">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="px-title text-accent">{reg.icon} {reg.name}</span>
+                <span className="text-base text-muted-foreground">Päev {c.day} · {c.night ? "🌙" : "☀️"} {c.label} · {reg.danger ? <span className="text-destructive">{"☠".repeat(reg.danger)} ohtlik</span> : <span className="text-primary">🟢 turvaline</span>}</span>
+              </div>
+              <p className="text-base text-muted-foreground">{reg.desc}</p>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-base">
+                <span>❤️ {Math.round(s.hp)}/{s.maxHp}</span>
+                <span>⚡ {Math.round(s.energy)}/100</span>
+                <span className="text-accent">⭐ Lv {s.level}</span>
+                <span>🪙 {s.inv.cash ?? 0}</span>
+                <span className={load(s) >= capacity(s) ? "text-destructive" : ""}>🎒 {load(s)}/{capacity(s)}</span>
+              </div>
+              <div className="flex items-center gap-2 text-base">
+                <span className="text-muted-foreground">XP</span>
+                <div className="h-2 flex-1 border border-border bg-muted"><div className="h-full bg-primary" style={{ width: `${Math.min(100, (s.xp / xpForLevel(s.level)) * 100)}%` }} /></div>
+                <span className="text-muted-foreground">{s.xp}/{xpForLevel(s.level)}</span>
+              </div>
+              {(() => {
+                const q = STORY_QUESTS.find((x) => qOpen(s, x) && qStep(s, x.id) < x.steps.length);
+                return (
+                  <div className="flex items-center gap-2 border-t border-border pt-2 text-base">
+                    <span className="min-w-0 flex-1 truncate">🎯 <span className="text-accent">HETKEL:</span> {q ? <>{q.title} — <span className="text-muted-foreground">{q.steps[qStep(s, q.id)].text}</span></> : <span className="text-muted-foreground">Sul pole aktiivset ülesannet.</span>}</span>
+                    <button className="px-btn shrink-0" onClick={() => setTab("quests")}>{q ? "Vaata" : "Ülesanded"}</button>
+                  </div>
+                );
+              })()}
             </div>
-            <div className="flex items-start gap-3">
-              <p className="flex-1 text-muted-foreground">{reg.desc}</p>
-              <MiniMap s={s} />
-            </div>
+            <MiniMap s={s} />
           </div>
           {s.action && <ActionBar s={s} />}
           {s.combat && <Combat s={s} mut={mut} />}
