@@ -17,7 +17,7 @@ export interface GameState {
   region: string; discovered: string[]; restAway?: boolean;
   structures: Record<string, number>;
   action: Action | null;
-  combat: { enemy: string; hp: number; defending: boolean; intent?: string; rage?: boolean; phase?: number; special?: boolean } | null;
+  combat: { enemy: string; hp: number; defending: boolean; intent?: string; rage?: boolean; phase?: number; special?: boolean; raid?: number } | null;
   damaged: Record<string, number>; bossDay: Record<string, number>; trophies: Record<string, number>; bountyWeek: string;
   event: string | null;
   log: LogEntry[];
@@ -488,7 +488,7 @@ export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "fl
     if (!med) { log(s, "Sul pole ravimeid!", "bad"); return; }
     useItem(s, med);
   } else if (act === "flee") {
-    if (rnd() < 0.5) { s.combat = null; log(s, "🏃 Põgenesid!", "info"); return; }
+    if (rnd() < 0.5) { const raid = s.combat.raid; s.combat = null; log(s, "🏃 Põgenesid!", "info"); if (raid) applyRaid(s, raid); return; }
     log(s, "Põgenemine ebaõnnestus!", "bad");
   }
   const boss = isBoss(e.id);
@@ -525,6 +525,7 @@ export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "fl
       const wk = weekKey(new Date());
       if (bountyFor(wk) === e.id && s.bountyWeek !== wk) { s.bountyWeek = wk; add(s, "cash", 50); gainXp(s, 100); log(s, `🧔 Pärdi pearaha! «Ma ütlesin, et see on raske. Ma ei öelnud, et võimatu. Need on erinevad sõnad, vaata sõnaraamatust.» +50 🪙, +100 XP`, "good"); }
       s.bossDay[s.region] = clock(s).day; log(s, `👑 MINIBOSS ALISTATUD! ${e.icon} ${e.name} — uus ilmub siia homme.`, "good"); }
+    if (s.combat?.raid) { add(s, "scrap", 2); log(s, "🛡️ Kaitsesid baasi! Ehitised ja varud jäid terveks. +2 vanametalli.", "good"); }
     const got = rollLoot(s, e.loot);
     log(s, `✅ ${e.name} on alistatud! +${e.xp} XP. ${got.join(", ")}`, "good");
     gainXp(s, e.xp, "combat");
@@ -716,21 +717,12 @@ export function tick(s: GameState, now = Date.now()) {
       if (s.inv.trap) { add(s, "trap", -1); power -= 8; log(s, "🪤 Mutandid astusid su lõksu! Rünnak nõrgenes.", "good"); }
       const def = baseDefense(s);
       s.stats.raids++;
-      if (power > def) {
-        const hits = Math.min(3, Math.ceil((power - def) / 6));
-        const broke: string[] = [];
-        for (let i = 0; i < hits; i++) {
-          const ok = Object.keys(s.structures).filter((k) => lvl(s, k) > 0);
-          if (!ok.length) break;
-          const k = ok[Math.floor(rnd() * ok.length)];
-          s.damaged[k] = (s.damaged[k] || 0) + 1;
-          broke.push(STRUCTURES[k]?.name || k);
-        }
-        const lost = Math.ceil((power - def) / 3);
-        ["wood", "stone", "scrap"].forEach((k) => add(s, k, -Math.min(s.inv[k] || 0, lost)));
-        if (atCamp) s.hp -= lost * 2;
-        log(s, `🚨 ÖINE RÜNNAK! Mutandid tungisid baasi ja lõhkusid: ${broke.join(", ") || "midagi ei jõudnud"}. Parandada saad Baasi lehel. (−${lost} puitu, kivi, metalli)`, "bad");
-        if (s.hp <= 0) die(s, "🚨 Öine rünnak — mutandid murdsid baasi ja tapsid sind.");
+      if (power > def && atCamp && !s.combat && !away) {
+        const foe = c.day < 10 ? "ratdog" : c.day < 25 ? "wolf" : "raider";
+        startCombat(s, foe); const cb = s.combat as GameState["combat"]; if (cb) cb.raid = power;
+        log(s, "🚨 ÖINE RÜNNAK! Mutandid ründavad baasi — võitle! Võit päästab ehitised, põgenemine laseb neil baasi rüüstata.", "bad");
+      } else if (power > def) {
+        applyRaid(s, power);
       } else log(s, `🌙 Öösel ründasid mutandid baasi, kuid seinad pidasid vastu.`, "good");
     }
   }
@@ -828,6 +820,24 @@ export function pickEnding(s: GameState) {
 }
 
 // ---------- base defense ----------
+function applyRaid(s: GameState, power: number) {
+  const def = baseDefense(s); const atCamp = s.region === "camp";
+
+  const hits = Math.min(3, Math.ceil((power - def) / 6));
+  const broke: string[] = [];
+  for (let i = 0; i < hits; i++) {
+    const ok = Object.keys(s.structures).filter((k) => lvl(s, k) > 0);
+    if (!ok.length) break;
+    const k = ok[Math.floor(rnd() * ok.length)];
+    s.damaged[k] = (s.damaged[k] || 0) + 1;
+    broke.push(STRUCTURES[k]?.name || k);
+  }
+  const lost = Math.ceil((power - def) / 3);
+  ["wood", "stone", "scrap"].forEach((k) => add(s, k, -Math.min(s.inv[k] || 0, lost)));
+  if (atCamp) s.hp -= lost * 2;
+  log(s, `🚨 ÖINE RÜNNAK! Mutandid tungisid baasi ja lõhkusid: ${broke.join(", ") || "midagi ei jõudnud"}. Parandada saad Baasi lehel. (−${lost} puitu, kivi, metalli)`, "bad");
+  if (s.hp <= 0) die(s, "🚨 Öine rünnak — mutandid murdsid baasi ja tapsid sind.");
+}
 export const raidPower = (day: number) => day * 1.5;
 export const lvl = (s: GameState, id: string) => Math.max(0, (s.structures[id] || 0) - (s.damaged?.[id] || 0));
 export const repairCost = (id: string) => Object.fromEntries(Object.entries(STRUCTURES[id]?.cost || {}).map(([k, v]) => [k, Math.max(1, Math.ceil(v / 3))]));

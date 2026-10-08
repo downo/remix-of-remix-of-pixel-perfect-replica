@@ -19,3 +19,10 @@ describe("tab left open", () => {
     expect(g.hp).toBeGreaterThanOrEqual(1); expect(g.deaths).toBe(0);
   });
 });
+import { respecPerks } from "../progress";
+describe("respec", () => {
+  it("costs 500 and returns perks", () => {
+    const g = newGame(); g.perks = ["f1"]; g.inv.cash = 499; expect(respecPerks(g)).not.toBeNull();
+    g.inv.cash = 500; expect(respecPerks(g)).toBeNull(); expect(g.perks).toEqual([]); expect(g.inv.cash).toBe(0);
+  });
+});
