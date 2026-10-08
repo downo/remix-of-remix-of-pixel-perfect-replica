@@ -230,6 +230,7 @@ export default function Game() {
                 <span>⚡ {Math.round(s.energy)}/100</span>
                 <span className={s.food <= 20 ? "text-destructive" : ""} title="Kõhu täituvus — 100 tähendab täis kõhtu">🍖 Kõht {Math.round(s.food)}/100</span>
                 <span className={s.water <= 20 ? "text-destructive" : ""} title="Vedelik — 100 tähendab, et janu pole">💧 Jook {Math.round(s.water)}/100</span>
+                <span className={s.rad >= 60 ? "text-destructive" : ""} title="Kiirgus — 0 on puhas, 100 on ohtlik">☢️ Kiirgus {Math.round(s.rad)}/100</span>
                 <span className="text-accent">⭐ Lv {s.level}</span>
                 <span>🪙 {s.inv.cash ?? 0}</span>
                 <span className={load(s) >= capacity(s) ? "text-destructive" : ""}>🎒 {load(s)}/{capacity(s)}</span>
