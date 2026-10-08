@@ -6,13 +6,13 @@ import {
   resolveEvent, save, canTame, tame, feedPet, renamePet, releasePet, kennelSlots, kennelStore, kennelTake, kennelRelease, breedPets, BREED_COST, BREED_COOLDOWN, WEATHER_FX, baseDefense, raidPower, repairStructure, repairCost, startBoss, bossReady, bountyFor, trophyCount, weekKey, isMini, isBoss, intentText, PHASES, MINI_FOR_DANGER, dailyFor, dailyProgress, claimDaily, weeklyFor, weeklyContribution, sealRift, skillLevel, startAction, tick, useItem, weaponDmg, weatherFor, seasonFor, PET_MUTS, wipe, xpForLevel, type GameState, stayAtBase, markInput
 } from "./engine";
 import { OnlineTab, syncOnline, useOnlineUser, fetchCloudSave, ResetPassword, Account } from "./Online";
-import { blip } from "./sound";
+import { blip, setScene, soundForLog, type Scene } from "./sound";
 import { BarTab } from "./Bar";
 import { WorldTab } from "./WorldTab";
 import { StoryQuests } from "./StoryQuests";
 import { Knowledge } from "./LoreTabs";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
-import { Portrait, BASE_IMG, REGION_IMG } from "./portraits";
+import { Portrait, BASE_IMG, REGION_IMG, PLAYER_IMG } from "./portraits";
 import { TUTORIAL_STEPS } from "./tutorial";
 
 /** Shows a portrait card the moment the player meets a new survivor. */
