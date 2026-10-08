@@ -11,7 +11,13 @@ export const pathReward = (n: number): { items: Record<string, number>; relic?: 
   if (n % 5 === 0) return { items: { cash: 30, bandage: 2 } };
   return { items: { cash: 10 + n, can: 1 } };
 };
-export const todayKey = (d = new Date()) => d.toISOString().slice(0, 10);
+// Player's local calendar day (not UTC), so the step resets at local midnight.
+export const todayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+/** When a server save replaces the local one, never lose Tuhkade tee steps the local copy already has. */
+export function keepBestPath(target: GameState, other: GameState | null) {
+  const a = target.path?.n || 0, b = other?.path?.n || 0;
+  if (other?.path && b > a) target.path = { ...other.path };
+}
 export const pathCanClaim = (s: GameState) => (s.path?.n || 0) < PATH_LEN && s.path?.last !== todayKey();
 export function claimPath(s: GameState): string | null {
   if (!pathCanClaim(s)) return (s.path?.n || 0) >= PATH_LEN ? "Tee on läbitud." : "Tänane samm on juba tehtud. Tule homme tagasi.";
