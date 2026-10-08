@@ -168,7 +168,7 @@ export function expAdvance(s: GameState): string | null {
   const lootMult = depth * (hasPerk(s, "w3") ? 1.5 : 1) * (hasPerk(s, "w5") ? 1.3 : 1);
   if (roll < 0.5) {
     const [id, max] = x.loot[Math.floor(rnd() * x.loot.length)];
-    const n = Math.max(1, Math.round((1 + rnd() * max) * lootMult));
+    const n = Math.max(1, Math.round((1 + rnd() * max) * Math.min(2.2, 1 + (lootMult - 1) * 0.5)));
     r.loot[id] = (r.loot[id] || 0) + n;
     r.log.push(`Etapp ${r.stage}: leidsid ${ITEMS[id]?.icon ?? ""} ${ITEMS[id]?.name ?? id} ×${n}.`);
   } else if (roll < 0.82) {
