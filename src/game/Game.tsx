@@ -979,13 +979,13 @@ function LogList({ s, n }: { s: GameState; n: number }) {
 
 function DeathScreen({ d, deaths, onClose }: { d: { cause: string; t: number }; deaths: number; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
       <div className="px-panel fadein w-full max-w-md border-destructive p-5 text-center" onClick={(e) => e.stopPropagation()} role="alertdialog" aria-label="Sa surid">
         <div className="px-title text-destructive">💀 SA SURID</div>
         <p className="my-3 text-lg">{d.cause}</p>
-        <p className="mb-3 text-base text-muted-foreground">Ärkasid laagris poole tervisega, kuid kaotasid pool ressurssidest. Surmasid kokku: {deaths}.</p>
+        <p className="mb-3 text-base text-muted-foreground">Mäng on peatatud. Ärkad laagris 30% elu ja energiaga, kiirgus kaob, aga pool ressurssidest on kadunud. Surmasid kokku: {deaths}.</p>
         <p className="mb-4 text-base text-muted-foreground">Nõuanne: hoia toit ja vesi üle 20, ehita seinu öiste rünnakute vastu ja võta kaasa sidemeid.</p>
-        <button className="px-btn px-btn-primary" onClick={onClose}>Ärka üles</button>
+        <button className="px-btn px-btn-primary" onClick={onClose}>🕯️ Ärka ellu</button>
       </div>
     </div>
   );
