@@ -525,7 +525,7 @@ export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "fl
       const wk = weekKey(new Date());
       if (bountyFor(wk) === e.id && s.bountyWeek !== wk) { s.bountyWeek = wk; add(s, "cash", 50); gainXp(s, 100); log(s, `🧔 Pärdi pearaha! «Ma ütlesin, et see on raske. Ma ei öelnud, et võimatu. Need on erinevad sõnad, vaata sõnaraamatust.» +50 🪙, +100 XP`, "good"); }
       s.bossDay[s.region] = clock(s).day; log(s, `👑 MINIBOSS ALISTATUD! ${e.icon} ${e.name} — uus ilmub siia homme.`, "good"); }
-    if (s.combat?.raid) { add(s, "scrap", 2); log(s, "🛡️ Kaitsesid baasi! Ehitised ja varud jäid terveks. +2 vanametalli.", "good"); }
+    if (s.combat?.raid) { add(s, "scrap", 2); log(s, "🛡️ Kaitsesid baasi! Mutandid põgenesid tühjade kätega. +2 vanametalli.", "good"); }
     const got = rollLoot(s, e.loot);
     log(s, `✅ ${e.name} on alistatud! +${e.xp} XP. ${got.join(", ")}`, "good");
     gainXp(s, e.xp, "combat");
@@ -720,7 +720,7 @@ export function tick(s: GameState, now = Date.now()) {
       if (power > def && atCamp && !s.combat && !away) {
         const foe = c.day < 10 ? "ratdog" : c.day < 25 ? "wolf" : "raider";
         startCombat(s, foe); const cb = s.combat as GameState["combat"]; if (cb) cb.raid = power;
-        log(s, "🚨 ÖINE RÜNNAK! Mutandid ründavad baasi — võitle! Võit päästab ehitised, põgenemine laseb neil baasi rüüstata.", "bad");
+        log(s, "🚨 ÖINE RÜNNAK! Mutandid ründavad baasi — võitle! Võit peletab nad tühjade kätega, põgenemine laseb neil su varusid riisuda.", "bad");
       } else if (power > def) {
         applyRaid(s, power);
       } else log(s, `🌙 Öösel ründasid mutandid baasi, kuid seinad pidasid vastu.`, "good");
