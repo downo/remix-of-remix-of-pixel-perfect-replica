@@ -141,7 +141,7 @@ export default function Game() {
   const [notes, setNotes] = useState<{ t: number; text: string; type: string }[]>([]);
   useEffect(() => {
     if (!s || !lastLog || Date.now() - lastLog >= 1500) return;
-    const e = s.log[0]; blip(e.type);
+    const e = s.log[0]; blip(soundForLog(e.type, e.text));
     if (e.type === "good" || e.type === "bad") {
       setNotes((n) => [{ t: e.t, text: e.text, type: e.type }, ...n].slice(0, 3));
       setTimeout(() => setNotes((n) => n.filter((x) => x.t !== e.t)), 5000);
@@ -163,19 +163,28 @@ export default function Game() {
 
   const c = clock(s); const w = weatherFor(s); const se = seasonFor(s); const reg = REGIONS[s.region];
   const busy = !canStart(s);
+  const WX_ON = ["rain", "ash", "fog", "crystal"];
+  const nightShade = c.night ? 0.6 : c.h >= 18 || c.h < 7 ? 0.3 : 0;
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-2 p-2 md:p-3">
+    <div className={`mx-auto flex min-h-screen max-w-7xl flex-col gap-2 p-2 md:p-3 ${impact?.k === "dmg" ? "screen-hit" : ""}`}>
+      {impact && <div key={impact.k + impact.n} className={`impact impact-${impact.k}`} aria-hidden="true" />}
+      {nightShade > 0 && <div className="night-veil" style={{ opacity: nightShade }} aria-hidden="true" />}
+      {WX_ON.includes(w.id) && <div className={`wx wx-${w.id}`} aria-hidden="true" />}
+      {!WX_ON.includes(w.id) && se.id === "winter" && <div className="wx wx-snow" aria-hidden="true" />}
       <div className="pointer-events-none fixed right-2 top-2 z-50 flex w-80 max-w-[90vw] flex-col gap-1" aria-live="polite">
         {notes.map((n) => <div key={n.t} className={`px-panel fadein px-3 py-2 text-base ${n.type === "bad" ? "border-destructive text-destructive" : "border-primary text-primary"}`}>{n.text}</div>)}
       </div>
       <MeetPopup s={s} />
       {/* HUD */}
       <header className="px-panel grid min-w-0 items-center gap-3 px-3 py-2 xl:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="min-w-0">
-          <h1 className="px-title text-primary glow">☢ TUHK</h1>
-          <div className="text-muted-foreground">Päev {c.day} | {c.label} {c.night ? "🌙" : "☀️"} · <span title={WEATHER_FX[w.id]}>{w.icon} {w.name}</span> · <span title={se.fx}>{se.icon} {se.name}</span></div>
-          <div className="text-base text-muted-foreground">{WEATHER_FX[w.id]} {se.fx}</div>
+        <div className="flex min-w-0 items-center gap-2">
+          {PLAYER_IMG.tuhk && <img src={PLAYER_IMG.tuhk} alt="Sinu tegelane" loading="lazy" width={256} height={256} className="h-11 w-11 shrink-0 border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
+          <div className="min-w-0">
+            <h1 className="px-title text-primary glow">☢ TUHK</h1>
+            <div className="text-muted-foreground">Päev {c.day} | {c.label} {c.night ? "🌙" : "☀️"} · <span title={WEATHER_FX[w.id]}>{w.icon} {w.name}</span> · <span title={se.fx}>{se.icon} {se.name}</span></div>
+            <div className="text-base text-muted-foreground">{WEATHER_FX[w.id]} {se.fx}</div>
+          </div>
         </div>
         <div aria-label="Mängija näitajad" className="grid min-w-0 grid-cols-6 items-center gap-2 sm:gap-4 xl:w-[35rem]">
         <Stat icon="❤️" v={s.hp} max={s.maxHp} cls="text-destructive" danger={s.hp < s.maxHp * 0.25} />
@@ -969,10 +978,31 @@ function AchTab({ s }: { s: GameState }) {
 }
 
 const LOG_CLS: Record<string, string> = { info: "", good: "text-primary", bad: "text-destructive", loot: "text-accent", lore: "text-magic", combat: "text-muted-foreground" };
+const LOG_IC: Record<string, string> = { info: "•", good: "✓", bad: "✗", loot: "◆", lore: "❖", combat: "⚔" };
+function logIcon(l: { text: string; type: string }) {
+  const t = l.text;
+  if (/TASE ÜLES/i.test(t)) return "⭐";
+  if (/SURID/i.test(t)) return "💀";
+  if (/Ehitatud|Ehitasid|parand/i.test(t)) return "🏗️";
+  if (/Valmistasid|Sepistasid/i.test(t)) return "🔨";
+  if (/Kasutasid|ravitud|Magasid|Puhkasid|Kastist|Kasti/i.test(t)) return "🧰";
+  if (/ründab|Lööd:|mööda!|TÕRJE|hammustab|viskab kivi/i.test(t)) return "⚔️";
+  if (/Kogusid|Leidsid|saak|püütud|trofee|Varast/i.test(t)) return "📦";
+  if (/Jõudsid|Avastasid|Tagasi laagrisse/i.test(t)) return "🚶";
+  if (/Põgenesid/i.test(t)) return "🏃";
+  if (/ilmub!/i.test(t)) return "⚠️";
+  if (/alistatud|MINIBOSS|KAITSID/i.test(t)) return "👑";
+  if (/hoiatus|Ohtlikult|jan|näl/i.test(t)) return "❗";
+  return LOG_IC[l.type] ?? "•";
+}
 function LogList({ s, n }: { s: GameState; n: number }) {
   return (
     <ul className="space-y-1">
-      {s.log.slice(0, n).map((l, i) => <li key={l.t + "-" + i} className={`${LOG_CLS[l.type]} ${i === 0 ? "" : "opacity-80"}`}>&gt; {l.text}</li>)}
+      {s.log.slice(0, n).map((l, i) => (
+        <li key={l.t + "-" + i} className={`${LOG_CLS[l.type]} ${i === 0 ? "log-new" : "opacity-80"}`}>
+          <span className="log-ic" aria-hidden="true">{logIcon(l)}</span>{l.text}
+        </li>
+      ))}
     </ul>
   );
 }
