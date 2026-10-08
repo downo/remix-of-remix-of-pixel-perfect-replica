@@ -31,3 +31,30 @@ SQL);
 
 function now(): string { return gmdate('Y-m-d\TH:i:s\Z'); }
 function new_id(): string { $b = random_bytes(16); $b[6] = chr((ord($b[6]) & 0x0f) | 0x40); $b[8] = chr((ord($b[8]) & 0x3f) | 0x80); return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($b), 4)); }
+
+// ---------- per-player save files: data/saves/<username>.json ----------
+function save_file(string $uid): string {
+  $dir = dirname(DB_PATH) . '/saves';
+  if (!is_dir($dir)) @mkdir($dir, 0770, true);
+  $st = db()->prepare('SELECT username FROM users WHERE id=?'); $st->execute([$uid]);
+  $name = strtolower((string)$st->fetchColumn());
+  if (!preg_match('/^[a-z0-9_-]{1,40}$/', $name)) $name = $uid;
+  return "$dir/$name.json";
+}
+function save_read(string $uid): ?array {
+  $f = save_file($uid);
+  if (is_file($f)) { $d = json_decode((string)file_get_contents($f), true); return is_array($d) ? $d : null; }
+  // One-time move of an older database save into its own file.
+  $st = db()->prepare('SELECT state, updated_at FROM saves WHERE user_id=?'); $st->execute([$uid]);
+  $r = $st->fetch(); if (!$r) return null;
+  $d = ['user_id' => $uid, 'state' => json_decode($r['state'], true), 'updated_at' => $r['updated_at']];
+  save_write($uid, $d['state']);
+  return $d;
+}
+function save_write(string $uid, $state): void {
+  $json = json_encode(['user_id' => $uid, 'state' => $state, 'updated_at' => now()], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+  if (strlen($json) > 3000000) throw new Exception('Salvestus liiga suur');
+  $f = save_file($uid); $tmp = $f . '.tmp';
+  file_put_contents($tmp, $json, LOCK_EX); rename($tmp, $f);
+}
+function save_delete(string $uid): void { $f = save_file($uid); if (is_file($f)) @unlink($f); }

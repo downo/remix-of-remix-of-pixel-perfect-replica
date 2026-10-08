@@ -86,6 +86,16 @@ function run_query(array $q) {
   $t = TABLES[$name]; $op = $q['op'] ?? 'select';
   $u = ($t['read'] === 'public' && $op === 'select') ? current_user() : need_user();
 
+  if ($name === 'saves') {
+    if ($op === 'select') {
+      $d = save_read($u['id']);
+      if ($d && ($q['cols'] ?? '*') !== '*') $d = array_intersect_key($d, array_flip(array_map('trim', explode(',', (string)$q['cols']))));
+      return !empty($q['single']) ? $d : ($d ? [$d] : []);
+    }
+    if ($op === 'upsert') { save_write($u['id'], $q['values']['state'] ?? null); return null; }
+    throw new ApiError('Not allowed');
+  }
+
   if ($op === 'select') {
     $args = [];
     $cols = ($q['cols'] ?? '*') === '*' ? $t['cols'] : array_map(fn($c) => col_ok($t, trim($c)), explode(',', (string)$q['cols']));
