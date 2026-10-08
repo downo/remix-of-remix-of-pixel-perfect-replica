@@ -1,4 +1,5 @@
 import { exploreSecrets } from "./lore";
+import { updateTutorial } from "./tutorial";
 import { enemyScale, worldEventFor } from "./world";
 import { bonus, giveRelic, makeRelic, maybeRelic, type ExpRun, type Relic } from "./progress";
 import { BAR_BUY, BAR_REGION, BAR_SELL, CONTRACT_POOL, type Contract, CODEX, PET_KINDS, ENEMIES, EVENTS, ITEMS, LORE, RECIPES, REGIONS, STRUCTURES, type Quest, type SkillId } from "./data";
@@ -23,7 +24,7 @@ export interface GameState {
   log: LogEntry[];
   npcs: string[]; lore: number; kills: number; deaths: number;
   lastProduce: number; lastNight: number;
-  ach: string[]; tut: boolean; sealed: boolean; seenEnding: boolean; tomDay: number; warn: string[]; lastDeath: { cause: string; t: number } | null;
+  ach: string[]; tut: boolean; tutorialDone?: string[]; sealed: boolean; seenEnding: boolean; tomDay: number; warn: string[]; lastDeath: { cause: string; t: number } | null;
   stats: Record<StatKey, number>;
   daily: { day: number; base: Record<string, number>; claimed: string[] };
   wk: { week: string; base: number };
@@ -119,9 +120,11 @@ function log(s: GameState, text: string, type: LogType = "info") {
   s.log = [{ t: Date.now(), text, type }, ...s.log].slice(0, 120);
 }
 export function add(s: GameState, id: string, n: number) {
+  updateTutorial(s);
   s.inv[id] = (s.inv[id] || 0) + n;
   if (n > 0 && s.seen && !s.seen.includes(id)) s.seen.push(id);
   if (s.inv[id] <= 0) delete s.inv[id];
+  updateTutorial(s);
 }
 export const has = (s: GameState, cost: Record<string, number>) => Object.entries(cost).every(([k, v]) => (s.inv[k] || 0) >= v);
 const pay = (s: GameState, cost: Record<string, number>) => Object.entries(cost).forEach(([k, v]) => add(s, k, -v));
@@ -625,6 +628,7 @@ let lastInput = Date.now();
 export const markInput = (t = Date.now()) => { lastInput = t; };
 export const IDLE_MS = 5 * 60_000;
 export function tick(s: GameState, now = Date.now()) {
+  updateTutorial(s);
   const dt = Math.min((now - s.lastTick) / 1000, 60 * 30); // cap 30 min offline drain
   s.lastTick = now;
   if (dt <= 0) return;
@@ -744,6 +748,7 @@ export function tick(s: GameState, now = Date.now()) {
   const wk = weekKey(new Date(now));
   if (s.wk.week !== wk) s.wk = { week: wk, base: statOf(s, weeklyFor(wk).stat) };
   checkAch(s);
+  updateTutorial(s);
 }
 
 export const QUESTS: Quest[] = [
@@ -1124,7 +1129,7 @@ export function hiloPay(s: GameState, n: number): string | null { return bet(s, 
 export function hiloCashOut(s: GameState, amount: number) { if (amount > 0) { add(s, "cash", amount); log(s, `🃏 Kõrgem-madalam: võitsid 🪙${amount}`, "loot"); } }
 
 const KEY = "tuhk-save-v1";
-export function save(s: GameState) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch {} }
+export function save(s: GameState) { updateTutorial(s); try { localStorage.setItem(KEY, JSON.stringify(s)); } catch {} }
 export function loadSave(): GameState | null {
   try {
     const r = localStorage.getItem(KEY); if (!r) return null;

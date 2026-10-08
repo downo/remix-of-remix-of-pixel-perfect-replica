@@ -13,6 +13,7 @@ import { StoryQuests } from "./StoryQuests";
 import { Knowledge } from "./LoreTabs";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
 import { Portrait, BASE_IMG, REGION_IMG } from "./portraits";
+import { TUTORIAL_STEPS } from "./tutorial";
 
 /** Shows a portrait card the moment the player meets a new survivor. */
 function MeetPopup({ s }: { s: GameState }) {
@@ -326,20 +327,14 @@ function EventCard({ s, mut }: { s: GameState; mut: Mut }) {
 function H({ children }: { children: React.ReactNode }) { return <h2 className="px-title mb-2 mt-1 text-primary">&gt; {children}</h2>; }
 
 // ---------- tutorial ----------
-const TUT_STEPS: { label: string; done: (s: GameState) => boolean }[] = [
-  { label: "Kogu ressursse (Kaart → 🪓 Kogu), kuni sul on 3 puitu", done: (s) => (s.inv.wood || 0) >= 3 },
-  { label: "Ehita lõkkeplats (Baas → ehitamine)", done: (s) => !!s.structures.campfire },
-  { label: "Valmista kivikirves ja varusta see (Crafting → Varustus)", done: (s) => s.equip.tool !== null },
-  { label: "Ehita varjualune, et öösel turvaliselt puhata", done: (s) => !!s.structures.shelter },
-  { label: "Hoi söök ja joog üle 50 enne ööd (🍖/💧)", done: (s) => s.food > 50 && s.water > 50 },
-  { label: "Alista 3 vaenlast ja avasta 5 piirkonda (Kaart)", done: (s) => s.kills >= 3 && s.discovered.length >= 5 },
-];
+const TUT_STEPS = TUTORIAL_STEPS;
 
 function Tutorial({ s, mut }: { s: GameState; mut: Mut }) {
   if (s.tut) return null;
-  const all = TUT_STEPS.every((t) => t.done(s));
+  const done = (id: string) => s.tutorialDone?.includes(id) ?? false;
+  const all = TUT_STEPS.every((t) => done(t.id));
   if (all) return null;
-  const n = TUT_STEPS.filter((t) => t.done(s)).length;
+  const n = TUT_STEPS.filter((t) => done(t.id)).length;
   return (
     <div className="border-2 border-primary/60 p-3">
       <div className="flex items-center justify-between">
@@ -348,7 +343,7 @@ function Tutorial({ s, mut }: { s: GameState; mut: Mut }) {
       </div>
       <ul className="mt-1 space-y-0.5">
         {TUT_STEPS.map((t) => {
-          const d = t.done(s);
+          const d = done(t.id);
           return <li key={t.label} className={`text-base ${d ? "text-muted-foreground line-through" : ""}`}>{d ? "[✓]" : "[ ]"} {t.label}</li>;
         })}
       </ul>
