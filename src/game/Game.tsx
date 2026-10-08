@@ -64,6 +64,7 @@ function useInputTracker() {
   }, []);
 }
 export default function Game() {
+  useInputTracker();
   const [s, setS] = useState<GameState | null>(null);
   const [tab, setTab] = useState<Tab>("today");
   const [toast, setToast] = useState<string | null>(null);
