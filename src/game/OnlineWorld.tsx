@@ -3,6 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { type GameState } from "./engine";
 import { SEASON_GOAL, TERRITORIES, claimSeason, ensureSeason, seasonContribution, seasonKey, seasonTheme } from "./world";
+import { FACTION_IMG } from "./portraits";
 
 type Mut = (fn: (g: GameState) => string | null | void) => void;
 type P = { s: GameState; mut: Mut; user: User | null; toast: (t: string) => void };
@@ -31,6 +32,7 @@ export function Territories({ s, mut, user, toast }: P) {
   return (
     <div className="space-y-2">
       <H>Klannide alad</H>
+      {FACTION_IMG.clan && <img src={FACTION_IMG.clan} alt="Klannide asula" loading="lazy" className="max-h-44 w-full border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
       <p className="text-muted-foreground">Iga ala annab kogu valdavale klannile püsiboonuse. Tühja ala saab kohe endale, teise klanni oma tuleb vallutada (kaitsjal on 15% eelis). Sama ala saab rünnata kord poole tunni jooksul.</p>
       {!user && <p className="text-muted-foreground">Logi sisse ja liitu klanniga, et alasid vallutada.</p>}
       {user && !mine && <p className="text-accent">Liitu enne klanniga (🤝 Klann).</p>}

@@ -24,3 +24,4 @@ User picked (all options): story ending + boss, achievements, companion (Väike 
 - [x] Factions + reputation, NPC story chains with choices, daily world events, collections, New Game+
 - [x] Clan territories (server-owned, bonuses) + monthly shared seasons (cloud + self-host)
 - [x] Gather/explore/fish/hunt moved from Base to Map; 5 dailies, Tuhkade tee 30-day path, secrets + knowledge journal
+- [x] Visuals + audio pass: sound engine (blips, per-region ambience, base music, log-line sounds), player portrait, night/weather overlays, journal icons, screen shake + dust impacts, button press feel, rift + clan pictures

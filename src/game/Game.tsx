@@ -6,13 +6,13 @@ import {
   resolveEvent, save, canTame, tame, feedPet, renamePet, releasePet, kennelSlots, kennelStore, kennelTake, kennelRelease, breedPets, BREED_COST, BREED_COOLDOWN, WEATHER_FX, baseDefense, raidPower, repairStructure, repairCost, startBoss, bossReady, bountyFor, trophyCount, weekKey, isMini, isBoss, intentText, PHASES, MINI_FOR_DANGER, dailyFor, dailyProgress, claimDaily, weeklyFor, weeklyContribution, sealRift, skillLevel, startAction, tick, useItem, weaponDmg, weatherFor, seasonFor, PET_MUTS, wipe, xpForLevel, type GameState, stayAtBase, markInput
 } from "./engine";
 import { OnlineTab, syncOnline, useOnlineUser, fetchCloudSave, ResetPassword, Account } from "./Online";
-import { blip } from "./sound";
+import { blip, setScene, soundForLog, type Scene } from "./sound";
 import { BarTab } from "./Bar";
 import { WorldTab } from "./WorldTab";
 import { StoryQuests } from "./StoryQuests";
 import { Knowledge } from "./LoreTabs";
 import { TodayTab, ExpTab, PerkAndRelics } from "./ProgressTabs";
-import { Portrait, BASE_IMG, REGION_IMG } from "./portraits";
+import { Portrait, BASE_IMG, REGION_IMG, PLAYER_IMG } from "./portraits";
 import { TUTORIAL_STEPS } from "./tutorial";
 
 /** Shows a portrait card the moment the player meets a new survivor. */
@@ -67,6 +67,13 @@ function useInputTracker() {
     return () => { ev.forEach((e) => window.removeEventListener(e, f)); document.removeEventListener("visibilitychange", vis); };
   }, []);
 }
+// Which ambient scene plays in each region.
+const SCENE_FOR: Record<string, Scene> = {
+  camp: "camp", forest: "forest", flooded: "water", city: "city", ruins: "ruins", magic: "magic",
+  mine: "depths", depths1: "depths", depths2: "depths", depths3: "depths",
+  desert: "waste", radiation: "waste", industrial: "waste", mountains: "waste",
+};
+
 export default function Game() {
   useInputTracker();
   const [s, setS] = useState<GameState | null>(null);
@@ -141,12 +148,40 @@ export default function Game() {
   const [notes, setNotes] = useState<{ t: number; text: string; type: string }[]>([]);
   useEffect(() => {
     if (!s || !lastLog || Date.now() - lastLog >= 1500) return;
-    const e = s.log[0]; blip(e.type);
+    const e = s.log[0]; blip(soundForLog(e.type, e.text));
     if (e.type === "good" || e.type === "bad") {
       setNotes((n) => [{ t: e.t, text: e.text, type: e.type }, ...n].slice(0, 3));
       setTimeout(() => setNotes((n) => n.filter((x) => x.t !== e.t)), 5000);
     }
   }, [lastLog]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Impact feedback: the screen shakes and flashes when you take damage, and puffs dust when you kill something.
+  const [impact, setImpact] = useState<{ k: "dmg" | "dust"; n: number } | null>(null);
+  const prevHp = useRef<number | undefined>(undefined);
+  const prevKills = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (!s) return;
+    const hp = prevHp.current; const kills = prevKills.current;
+    prevHp.current = s.hp; prevKills.current = s.kills;
+    if (hp === undefined || kills === undefined) return;
+    if (s.hp < hp - 0.5) setImpact({ k: "dmg", n: Date.now() });
+    else if (s.kills > kills) setImpact({ k: "dust", n: Date.now() });
+  }, [s?.hp, s?.kills]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!impact) return; const t = setTimeout(() => setImpact(null), 550); return () => clearTimeout(t); }, [impact]);
+
+  // Ambient sound follows where you are; the base plays a slow melody that gets slower at night.
+  const isNight = s ? clock(s).night : false;
+  const [prefsTick, setPrefsTick] = useState(0);
+  useEffect(() => {
+    const f = () => setPrefsTick((x) => x + 1);
+    window.addEventListener("tuhk-prefs", f);
+    return () => { window.removeEventListener("tuhk-prefs", f); setScene("off"); };
+  }, []);
+  useEffect(() => {
+    if (!s) return;
+    const sc: Scene = tab === "bar" ? "bar" : SCENE_FOR[s.region] ?? "waste";
+    setScene(sc, { music: sc === "camp", night: isNight });
+  }, [s?.region, tab, isNight, prefsTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!s) return <div className="flex min-h-screen items-center justify-center px-title text-primary glow">LAADIN<span className="blink">_</span></div>;
 
@@ -163,19 +198,28 @@ export default function Game() {
 
   const c = clock(s); const w = weatherFor(s); const se = seasonFor(s); const reg = REGIONS[s.region];
   const busy = !canStart(s);
+  const WX_ON = ["rain", "ash", "fog", "crystal"];
+  const nightShade = c.night ? 0.6 : c.h >= 18 || c.h < 7 ? 0.3 : 0;
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-2 p-2 md:p-3">
+    <div className={`mx-auto flex min-h-screen max-w-7xl flex-col gap-2 p-2 md:p-3 ${impact?.k === "dmg" ? "screen-hit" : ""}`}>
+      {impact && <div key={impact.k + impact.n} className={`impact impact-${impact.k}`} aria-hidden="true" />}
+      {nightShade > 0 && <div className="night-veil" style={{ opacity: nightShade }} aria-hidden="true" />}
+      {WX_ON.includes(w.id) && <div className={`wx wx-${w.id}`} aria-hidden="true" />}
+      {!WX_ON.includes(w.id) && se.id === "winter" && <div className="wx wx-snow" aria-hidden="true" />}
       <div className="pointer-events-none fixed right-2 top-2 z-50 flex w-80 max-w-[90vw] flex-col gap-1" aria-live="polite">
         {notes.map((n) => <div key={n.t} className={`px-panel fadein px-3 py-2 text-base ${n.type === "bad" ? "border-destructive text-destructive" : "border-primary text-primary"}`}>{n.text}</div>)}
       </div>
       <MeetPopup s={s} />
       {/* HUD */}
       <header className="px-panel grid min-w-0 items-center gap-3 px-3 py-2 xl:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="min-w-0">
-          <h1 className="px-title text-primary glow">☢ TUHK</h1>
-          <div className="text-muted-foreground">Päev {c.day} | {c.label} {c.night ? "🌙" : "☀️"} · <span title={WEATHER_FX[w.id]}>{w.icon} {w.name}</span> · <span title={se.fx}>{se.icon} {se.name}</span></div>
-          <div className="text-base text-muted-foreground">{WEATHER_FX[w.id]} {se.fx}</div>
+        <div className="flex min-w-0 items-center gap-2">
+          {PLAYER_IMG.tuhk && <img src={PLAYER_IMG.tuhk} alt="Sinu tegelane" loading="lazy" width={256} height={256} className="h-11 w-11 shrink-0 border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
+          <div className="min-w-0">
+            <h1 className="px-title text-primary glow">☢ TUHK</h1>
+            <div className="text-muted-foreground">Päev {c.day} | {c.label} {c.night ? "🌙" : "☀️"} · <span title={WEATHER_FX[w.id]}>{w.icon} {w.name}</span> · <span title={se.fx}>{se.icon} {se.name}</span></div>
+            <div className="text-base text-muted-foreground">{WEATHER_FX[w.id]} {se.fx}</div>
+          </div>
         </div>
         <div aria-label="Mängija näitajad" className="grid min-w-0 grid-cols-6 items-center gap-2 sm:gap-4 xl:w-[35rem]">
         <Stat icon="❤️" v={s.hp} max={s.maxHp} cls="text-destructive" danger={s.hp < s.maxHp * 0.25} />
@@ -426,12 +470,16 @@ function RegionActions({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean
       </div>
       {s.region === "magic" && s.inv.sealer ? (
         <div className="border-2 border-magic p-3">
+          {REGION_IMG.rift && <img src={REGION_IMG.rift} alt="Lõhe" loading="lazy" className="mb-2 max-h-44 w-full border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
           <div className="px-title text-magic">🌀 LÕHE PITSEERIJA</div>
           <p className="my-1 text-muted-foreground">See on hetk, kogu see teekond oli selleks. Sulge Lõhe. (Lõpetab loo.)</p>
           <button className="px-btn px-btn-primary" onClick={() => { if (confirm("Sulge Lõhe igaveseks? See lõpetab loo.")) mut((g) => sealRift(g)); }}>🌀 Pitseeri Lõhe</button>
         </div>
       ) : s.region === "magic" && (
-        <p className="text-base text-muted-foreground">💠 Lõhe virvendab siin. Selle sulgemiseks vajad Lõhe Pitseerijat — sepista see laboris Lõhe kildast (sügavustest).</p>
+        <div className="border-2 border-border p-3">
+          {REGION_IMG.rift && <img src={REGION_IMG.rift} alt="Lõhe" loading="lazy" className="mb-2 max-h-44 w-full border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
+          <p className="text-base text-muted-foreground">💠 Lõhe virvendab siin. Selle sulgemiseks vajad Lõhe Pitseerijat — sepista see laboris Lõhe kildast (sügavustest).</p>
+        </div>
       )}    </div>
   );
 }
@@ -969,10 +1017,31 @@ function AchTab({ s }: { s: GameState }) {
 }
 
 const LOG_CLS: Record<string, string> = { info: "", good: "text-primary", bad: "text-destructive", loot: "text-accent", lore: "text-magic", combat: "text-muted-foreground" };
+const LOG_IC: Record<string, string> = { info: "•", good: "✓", bad: "✗", loot: "◆", lore: "❖", combat: "⚔" };
+function logIcon(l: { text: string; type: string }) {
+  const t = l.text;
+  if (/TASE ÜLES/i.test(t)) return "⭐";
+  if (/SURID/i.test(t)) return "💀";
+  if (/Ehitatud|Ehitasid|parand/i.test(t)) return "🏗️";
+  if (/Valmistasid|Sepistasid/i.test(t)) return "🔨";
+  if (/Kasutasid|ravitud|Magasid|Puhkasid|Kastist|Kasti/i.test(t)) return "🧰";
+  if (/ründab|Lööd:|mööda!|TÕRJE|hammustab|viskab kivi/i.test(t)) return "⚔️";
+  if (/Kogusid|Leidsid|saak|püütud|trofee|Varast/i.test(t)) return "📦";
+  if (/Jõudsid|Avastasid|Tagasi laagrisse/i.test(t)) return "🚶";
+  if (/Põgenesid/i.test(t)) return "🏃";
+  if (/ilmub!/i.test(t)) return "⚠️";
+  if (/alistatud|MINIBOSS|KAITSID/i.test(t)) return "👑";
+  if (/hoiatus|Ohtlikult|jan|näl/i.test(t)) return "❗";
+  return LOG_IC[l.type] ?? "•";
+}
 function LogList({ s, n }: { s: GameState; n: number }) {
   return (
     <ul className="space-y-1">
-      {s.log.slice(0, n).map((l, i) => <li key={l.t + "-" + i} className={`${LOG_CLS[l.type]} ${i === 0 ? "" : "opacity-80"}`}>&gt; {l.text}</li>)}
+      {s.log.slice(0, n).map((l, i) => (
+        <li key={l.t + "-" + i} className={`${LOG_CLS[l.type]} ${i === 0 ? "log-new" : "opacity-80"}`}>
+          <span className="log-ic" aria-hidden="true">{logIcon(l)}</span>{l.text}
+        </li>
+      ))}
     </ul>
   );
 }
@@ -995,6 +1064,7 @@ function Ending({ s, onClose }: { s: GameState; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4" onClick={onClose}>
       <div className="px-panel fadein max-w-lg w-full border-magic p-5 text-center" onClick={(e) => e.stopPropagation()}>
+        {REGION_IMG.rift && <img src={REGION_IMG.rift} alt="Lõhe" loading="lazy" className="mb-3 max-h-40 w-full border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
         <div className="px-title endglow text-magic">🌍 MAAILM PITSEERITUD</div>
         <p className="my-3">Pitseerija toimis. Lõhe sulgus — taevas paranes ja roheline virvendus kadus.</p>
         <div className="px-title text-accent">{ENDINGS[s.ending || "settlers"].title}</div>
@@ -1038,6 +1108,7 @@ function loadPrefs(): Prefs {
 function applyPrefs(p: Prefs) {
   const el = document.documentElement;
   el.dataset.text = p.text; el.dataset.contrast = p.contrast; el.dataset.motion = p.motion; el.dataset.theme = p.theme;
+  try { window.dispatchEvent(new Event("tuhk-prefs")); } catch { /* no window (SSR) */ }
 }
 
 function A11ySettings() {
