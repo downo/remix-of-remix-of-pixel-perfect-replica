@@ -525,7 +525,7 @@ export function combatAct(s: GameState, act: "attack" | "heavy" | "defend" | "fl
       const wk = weekKey(new Date());
       if (bountyFor(wk) === e.id && s.bountyWeek !== wk) { s.bountyWeek = wk; add(s, "cash", 50); gainXp(s, 100); log(s, `🧔 Pärdi pearaha! «Ma ütlesin, et see on raske. Ma ei öelnud, et võimatu. Need on erinevad sõnad, vaata sõnaraamatust.» +50 🪙, +100 XP`, "good"); }
       s.bossDay[s.region] = clock(s).day; log(s, `👑 MINIBOSS ALISTATUD! ${e.icon} ${e.name} — uus ilmub siia homme.`, "good"); }
-    if (s.combat?.raid) { add(s, "scrap", 2); log(s, "🛡️ Kaitsesid baasi! Ehitised ja varud jäid terveks. +2 vanametalli.", "good"); }
+    if (s.combat?.raid) { add(s, "scrap", 2); log(s, "🛡️ Kaitsesid baasi! Mutandid põgenesid tühjade kätega. +2 vanametalli.", "good"); }
     const got = rollLoot(s, e.loot);
     log(s, `✅ ${e.name} on alistatud! +${e.xp} XP. ${got.join(", ")}`, "good");
     gainXp(s, e.xp, "combat");
@@ -720,7 +720,7 @@ export function tick(s: GameState, now = Date.now()) {
       if (power > def && atCamp && !s.combat && !away) {
         const foe = c.day < 10 ? "ratdog" : c.day < 25 ? "wolf" : "raider";
         startCombat(s, foe); const cb = s.combat as GameState["combat"]; if (cb) cb.raid = power;
-        log(s, "🚨 ÖINE RÜNNAK! Mutandid ründavad baasi — võitle! Võit päästab ehitised, põgenemine laseb neil baasi rüüstata.", "bad");
+        log(s, "🚨 ÖINE RÜNNAK! Mutandid ründavad baasi — võitle! Võit peletab nad tühjade kätega, põgenemine laseb neil su varusid riisuda.", "bad");
       } else if (power > def) {
         applyRaid(s, power);
       } else log(s, `🌙 Öösel ründasid mutandid baasi, kuid seinad pidasid vastu.`, "good");
@@ -820,23 +820,27 @@ export function pickEnding(s: GameState) {
 }
 
 // ---------- base defense ----------
+// Mutants don't break buildings — they steal a share of the raw goods
+// they'd find in their own wasteland habitat (wood, stone, scrap, bones, hide, cloth).
+const RAID_STEALABLE = ["wood", "stone", "scrap", "hide", "cloth", "meat"];
 function applyRaid(s: GameState, power: number) {
   const def = baseDefense(s); const atCamp = s.region === "camp";
-
-  const hits = Math.min(3, Math.ceil((power - def) / 6));
-  const broke: string[] = [];
-  for (let i = 0; i < hits; i++) {
-    const ok = Object.keys(s.structures).filter((k) => lvl(s, k) > 0);
-    if (!ok.length) break;
-    const k = ok[Math.floor(rnd() * ok.length)];
-    s.damaged[k] = (s.damaged[k] || 0) + 1;
-    broke.push(STRUCTURES[k]?.name || k);
+  const share = Math.min(0.35, 0.1 + (power - def) * 0.02); // 10–35% of each stealable pile
+  const taken: string[] = [];
+  for (const k of RAID_STEALABLE) {
+    const have = (s.inv[k] || 0) + (s.stash?.[k] || 0);
+    if (!have) continue;
+    const n = Math.max(1, Math.floor(have * share));
+    const fromInv = Math.min(s.inv[k] || 0, n);
+    if (fromInv) add(s, k, -fromInv);
+    const rest = n - fromInv;
+    if (rest && s.stash) { s.stash[k] = Math.max(0, (s.stash[k] || 0) - rest); if (!s.stash[k]) delete s.stash[k]; }
+    taken.push(`${n}× ${ITEMS[k]?.name || k}`);
   }
-  const lost = Math.ceil((power - def) / 3);
-  ["wood", "stone", "scrap"].forEach((k) => add(s, k, -Math.min(s.inv[k] || 0, lost)));
-  if (atCamp) s.hp -= lost * 2;
-  log(s, `🚨 ÖINE RÜNNAK! Mutandid tungisid baasi ja lõhkusid: ${broke.join(", ") || "midagi ei jõudnud"}. Parandada saad Baasi lehel. (−${lost} puitu, kivi, metalli)`, "bad");
-  if (s.hp <= 0) die(s, "🚨 Öine rünnak — mutandid murdsid baasi ja tapsid sind.");
+  if (atCamp && taken.length) s.hp = Math.max(1, s.hp - 4);
+  log(s, taken.length
+    ? `🚨 ÖINE RÜNNAK! Mutandid hiilisid baasi ja viisid endale tuttavat kraami: ${taken.join(", ")}. Ehitised jäid terveks.`
+    : `🚨 ÖINE RÜNNAK! Mutandid uurisid baasi, aga ei leidnud endale midagi võtta. Ehitised jäid terveks.`, "bad");
 }
 export const raidPower = (day: number) => day * 1.5;
 export const lvl = (s: GameState, id: string) => Math.max(0, (s.structures[id] || 0) - (s.damaged?.[id] || 0));
