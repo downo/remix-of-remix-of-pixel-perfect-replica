@@ -636,6 +636,8 @@ export function tick(s: GameState, now = Date.now()) {
   const wid = weatherFor(s, now).id;
   const offlineGap = dt > 15;
   const away = offlineGap || now - lastInput > IDLE_MS;
+  const st = s as GameState & { awayNoticed?: boolean };
+  if (!away) st.awayNoticed = false; // active again → next absence may warn once more
   // "Jää baasi" button: safe rest while away — no harm, slow healing, flag consumed on return.
   if (away && s.restAway && s.region === "camp") {
     s.restAway = false;
@@ -674,10 +676,8 @@ export function tick(s: GameState, now = Date.now()) {
   if (offlineGap && !atCamp && !s.combat) {
     const before = s.hp; s.hp = Math.max(1, s.hp - dt * 0.012);
     const lost = Math.round(before - s.hp);
-    const st = s as GameState & { awayNoticed?: boolean };
-    // Exactly one note per absence: fires once, resets when the player is active again.
-    if (!away) st.awayNoticed = false;
-    else if (lost >= 1 && dt > 120 && !st.awayNoticed) {
+    // Exactly one warning per absence.
+    if (lost >= 1 && dt > 120 && !st.awayNoticed) {
       st.awayNoticed = true;
       log(s, `🌑 Olid eemal väljas — kaotasid ${lost} HP. Enne lahkumist mine baasi ja vajuta «Jää baasi».`, "bad");
     }
