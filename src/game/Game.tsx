@@ -470,12 +470,16 @@ function RegionActions({ s, mut, busy }: { s: GameState; mut: Mut; busy: boolean
       </div>
       {s.region === "magic" && s.inv.sealer ? (
         <div className="border-2 border-magic p-3">
+          {REGION_IMG.rift && <img src={REGION_IMG.rift} alt="Lõhe" loading="lazy" className="mb-2 max-h-44 w-full border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
           <div className="px-title text-magic">🌀 LÕHE PITSEERIJA</div>
           <p className="my-1 text-muted-foreground">See on hetk, kogu see teekond oli selleks. Sulge Lõhe. (Lõpetab loo.)</p>
           <button className="px-btn px-btn-primary" onClick={() => { if (confirm("Sulge Lõhe igaveseks? See lõpetab loo.")) mut((g) => sealRift(g)); }}>🌀 Pitseeri Lõhe</button>
         </div>
       ) : s.region === "magic" && (
-        <p className="text-base text-muted-foreground">💠 Lõhe virvendab siin. Selle sulgemiseks vajad Lõhe Pitseerijat — sepista see laboris Lõhe kildast (sügavustest).</p>
+        <div className="border-2 border-border p-3">
+          {REGION_IMG.rift && <img src={REGION_IMG.rift} alt="Lõhe" loading="lazy" className="mb-2 max-h-44 w-full border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
+          <p className="text-base text-muted-foreground">💠 Lõhe virvendab siin. Selle sulgemiseks vajad Lõhe Pitseerijat — sepista see laboris Lõhe kildast (sügavustest).</p>
+        </div>
       )}    </div>
   );
 }
@@ -1060,6 +1064,7 @@ function Ending({ s, onClose }: { s: GameState; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4" onClick={onClose}>
       <div className="px-panel fadein max-w-lg w-full border-magic p-5 text-center" onClick={(e) => e.stopPropagation()}>
+        {REGION_IMG.rift && <img src={REGION_IMG.rift} alt="Lõhe" loading="lazy" className="mb-3 max-h-40 w-full border-2 border-border object-cover" style={{ imageRendering: "pixelated" }} />}
         <div className="px-title endglow text-magic">🌍 MAAILM PITSEERITUD</div>
         <p className="my-3">Pitseerija toimis. Lõhe sulgus — taevas paranes ja roheline virvendus kadus.</p>
         <div className="px-title text-accent">{ENDINGS[s.ending || "settlers"].title}</div>

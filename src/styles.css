@@ -92,7 +92,7 @@
     transition: transform .05s, background .1s, color .1s;
   }
   .px-btn:hover:not(:disabled) { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
-  .px-btn:active:not(:disabled) { transform: translate(1px, 1px); }
+  .px-btn:active:not(:disabled) { transform: translate(1px, 1px); box-shadow: inset 2px 2px 0 color-mix(in oklab, var(--background) 45%, transparent); }
   .px-btn:disabled { opacity: .35; cursor: not-allowed; color: var(--muted-foreground); border-color: var(--border); background: var(--muted); }
   .px-btn-primary { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
   .px-btn-primary:hover:not(:disabled) { background: color-mix(in oklab, var(--primary) 80%, white); color: var(--primary-foreground); }
