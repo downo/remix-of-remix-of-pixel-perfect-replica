@@ -691,7 +691,13 @@ export function tick(s: GameState, now = Date.now()) {
     const offline = away; // away from the game: never die from needs, stop at 1 HP
     s.hp -= dt * drain;
 
-    if (offline && s.hp < 1) { s.hp = 1; log(s, "🩸 Olid eemal ja su keha on kurnatud — ainult 1 HP alles! Söö, joo ja ravi end kohe.", "bad"); }
+    if (offline && s.hp < 1) {
+      s.hp = 1;
+      if (!st.awayNoticed) {
+        st.awayNoticed = true;
+        log(s, "🩸 Olid eemal ja su keha on kurnatud — ainult 1 HP alles! Söö, joo ja ravi end kohe.", "bad");
+      }
+    }
     if (s.hp <= 0) {
       const why = s.water <= 0 ? "💧 Suri janu kätte." : s.food <= 0 ? "🍖 Suri nälga." : "☣️ Kiirgus tappis sind.";
       die(s, why); return;
