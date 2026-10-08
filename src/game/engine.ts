@@ -619,6 +619,10 @@ export function resolveEvent(s: GameState, choice: string) {
 }
 
 // ---------- tick (timestamp based, works offline) ----------
+// Last real player input (mouse/keys/touch). A tab left open but untouched counts as "away".
+let lastInput = Date.now();
+export const markInput = (t = Date.now()) => { lastInput = t; };
+export const IDLE_MS = 5 * 60_000;
 export function tick(s: GameState, now = Date.now()) {
   const dt = Math.min((now - s.lastTick) / 1000, 60 * 30); // cap 30 min offline drain
   s.lastTick = now;
@@ -629,7 +633,8 @@ export function tick(s: GameState, now = Date.now()) {
   // Needs: slow passive drain (full bar lasts ~3h water / ~4h food of active play), slower when resting or
   // sheltered at camp, much slower while away. Most hunger/thirst now comes from effort (see startAction).
   const wid = weatherFor(s, now).id;
-  const away = dt > 15;
+  const offlineGap = dt > 15;
+  const away = offlineGap || now - lastInput > IDLE_MS;
   // "Jää baasi" button: safe rest while away — no harm, slow healing, flag consumed on return.
   if (away && s.restAway && s.region === "camp") {
     s.restAway = false;
@@ -665,10 +670,10 @@ export function tick(s: GameState, now = Date.now()) {
     else if (!bad && s.warn.includes(k)) s.warn = s.warn.filter((x) => x !== k);
   }
   let drain = 0;
-  if (away && !atCamp && !s.combat) { s.hp = Math.max(1, s.hp - dt * 0.012); log(s, "🌑 Jäid eemal olles väljas ööbima — said kannatada. Mine järgmine kord enne lahkumist baasi ja vajuta «Jää baasi».", "bad"); }
+  if (offlineGap && !atCamp && !s.combat) { s.hp = Math.max(1, s.hp - dt * 0.012); log(s, "🌑 Jäid eemal olles väljas ööbima — said kannatada. Mine järgmine kord enne lahkumist baasi ja vajuta «Jää baasi».", "bad"); }
   if (s.food <= 0) drain += 0.03; if (s.water <= 0) drain += 0.045; if (s.rad >= 80) drain += 0.05;
   if (drain && !s.combat) {
-    const offline = dt > 15; // away from the game: never die from needs, stop at 1 HP
+    const offline = away; // away from the game: never die from needs, stop at 1 HP
     s.hp -= dt * drain;
 
     if (offline && s.hp < 1) { s.hp = 1; log(s, "🩸 Olid eemal ja su keha on kurnatud — ainult 1 HP alles! Söö, joo ja ravi end kohe.", "bad"); }
@@ -703,7 +708,7 @@ export function tick(s: GameState, now = Date.now()) {
     const br = Object.keys(s.damaged || {}).find((k) => s.damaged[k] > 0);
     if (br) { s.damaged[br]--; if (!s.damaged[br]) delete s.damaged[br]; log(s, `🧒 Tom nokitses öö läbi ja parandas: ${STRUCTURES[br]?.icon} ${STRUCTURES[br]?.name}!`, "good"); }
   }
-  if (c.night && c.day !== s.lastNight && Object.keys(s.structures).length >= 2) {
+  if (!away && c.night && c.day !== s.lastNight && Object.keys(s.structures).length >= 2) {
     s.lastNight = c.day;
     // raids are rarer: roughly every third night, never in the first 3 days
     if (c.day > 3 && rnd() < 0.33) {
