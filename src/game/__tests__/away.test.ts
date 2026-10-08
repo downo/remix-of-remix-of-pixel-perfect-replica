@@ -13,6 +13,23 @@ describe("away & loot", () => {
 });
 import { markInput } from "../engine";
 describe("tab left open", () => {
+  it("logs exhaustion only once per absence and allows a new warning after returning", () => {
+    const g = newGame(); g.region = "camp"; g.food = 0; g.water = 0; g.hp = 1;
+    g.warn = ["food", "water"]; g.rad = 0;
+    const initialLogs = g.log.length;
+    tick(g, g.lastTick + 400_000);
+    expect(g.log.length).toBe(initialLogs + 1);
+    const warnedLogs = g.log.length;
+    for (let i = 0; i < 10; i++) tick(g, g.lastTick + 400_000);
+    expect(g.log.length).toBe(warnedLogs);
+    expect(g.hp).toBe(1);
+    g.hp = 50;
+    markInput(g.lastTick);
+    tick(g, g.lastTick + 1_000);
+    g.hp = 1;
+    tick(g, g.lastTick + 400_000);
+    expect(g.log.length).toBe(warnedLogs + 1);
+  });
   it("idle player with open tab never dies of thirst", () => {
     const g = newGame(); g.water = 0; g.food = 0; g.hp = 50; markInput(g.lastTick);
     for (let t = 1; t <= 600; t++) tick(g, g.lastTick + 10_000); // 100 min of 10s ticks
