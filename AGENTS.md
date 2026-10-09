@@ -14,3 +14,4 @@
 - Tutorial milestones use stable IDs persisted in the game save and are updated by the engine; why: spending resources or declining needs must not undo completed onboarding.
 - Only the visible tab uploads the server save, and loading a server save keeps the higher Tuhkade tee step; why: a forgotten background tab/device must not roll progress back.
 - Faction depth (relations, contracts, rank perks, secrets, exclusive gear, daily event) lives in `src/game/factions.ts`; rank perks feed `progress.bonus()`; why: one place for faction rules and their effect on combat/loot.
+- HUD vital stats share a native progress-based presenter, and journal colors map existing event types in the presentation layer; why: consistent accessible indicators without changing game rules.

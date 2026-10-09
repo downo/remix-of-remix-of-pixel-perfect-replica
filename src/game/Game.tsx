@@ -71,6 +71,20 @@ const isHeroTab = (t: Tab) => t === "gear" || t === "skills" || t === "ach";
 
 const costText = (c: Record<string, number>) => Object.entries(c).map(([k, v]) => `${ITEMS[k].icon}${v}`).join(" ");
 const fmt = (sec: number) => (sec >= 60 ? `${Math.floor(sec / 60)}m ${sec % 60 ? (sec % 60) + "s" : ""}` : `${sec}s`);
+function HudStat({ label, icon, value, max = 100, tone, warning = false }: {
+  label: string; icon: string; value: number; max?: number; tone: string; warning?: boolean;
+}) {
+  const current = Math.max(0, Math.min(max, value));
+  return (
+    <div className="min-w-0 space-y-1">
+      <div className="flex items-center justify-between gap-1 text-base">
+        <span className="whitespace-nowrap">{icon} {label}</span>
+        <span className={`whitespace-nowrap tabular-nums ${warning ? "text-destructive" : "text-muted-foreground"}`}>{warning && <span aria-label="Hoiatus">! </span>}{Math.round(current)}/{max}</span>
+      </div>
+      <progress className={`hud-meter ${tone}`} aria-label={label} value={current} max={max} />
+    </div>
+  );
+}
 const TYPE_LABEL: Record<ItemType, string> = {
   resource: "resurss", food: "toit", drink: "jook", medicine: "meditsiin",
   weapon: "relv", armor: "rüü", head: "müts", boots: "saapad", tool: "tööriist", rare: "haruldane",
@@ -246,19 +260,21 @@ export default function Game() {
                 <span className="text-base text-muted-foreground">Päev {c.day} · {c.night ? "🌙" : "☀️"} {c.label} · {reg.danger ? <span className="text-destructive">{"☠".repeat(reg.danger)} ohtlik</span> : <span className="text-primary">🟢 turvaline</span>}</span>
               </div>
               <p className="text-base text-muted-foreground">{reg.desc}</p>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-base">
-                <span>❤️ {Math.round(s.hp)}/{s.maxHp}</span>
-                <span>⚡ {Math.round(s.energy)}/100</span>
-                <span className={s.food <= 20 ? "text-destructive" : ""} title="Kõhu täituvus — 100 tähendab täis kõhtu">🍖 Kõht {Math.round(s.food)}/100</span>
-                <span className={s.water <= 20 ? "text-destructive" : ""} title="Vedelik — 100 tähendab, et janu pole">💧 Jook {Math.round(s.water)}/100</span>
-                <span className={s.rad >= 60 ? "text-destructive" : ""} title="Kiirgus — 0 on puhas, 100 on ohtlik">☢️ Kiirgus {Math.round(s.rad)}/100</span>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-2 xl:grid-cols-3">
+                <HudStat label="Elud" icon="❤️" value={s.hp} max={s.maxHp} tone="text-destructive" />
+                <HudStat label="Energia" icon="⚡" value={s.energy} tone="text-energy" />
+                <HudStat label="Kõht" icon="🍖" value={s.food} tone="text-food" warning={s.food <= 20} />
+                <HudStat label="Jook" icon="💧" value={s.water} tone="text-water" warning={s.water <= 20} />
+                <HudStat label="Kiirgus" icon="☢️" value={s.rad} tone="text-rad" warning={s.rad >= 60} />
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-2 text-base">
                 <span className="text-accent">⭐ Lv {s.level}</span>
                 <span>🪙 {s.inv.cash ?? 0}</span>
                 <span className={load(s) >= capacity(s) ? "text-destructive" : ""}>🎒 {load(s)}/{capacity(s)}</span>
               </div>
               <div className="flex items-center gap-2 text-base">
                 <span className="text-muted-foreground">XP</span>
-                <div className="h-2 flex-1 border border-border bg-muted"><div className="h-full bg-primary" style={{ width: `${Math.min(100, (s.xp / xpForLevel(s.level)) * 100)}%` }} /></div>
+                <progress className="hud-meter min-w-0 flex-1 text-primary" aria-label="Kogemus" value={Math.max(0, Math.min(s.xp, xpForLevel(s.level)))} max={xpForLevel(s.level)} />
                 <span className="text-muted-foreground">{s.xp}/{xpForLevel(s.level)}</span>
               </div>
               {(() => {
@@ -1057,7 +1073,7 @@ function AchTab({ s }: { s: GameState }) {
   );
 }
 
-const LOG_CLS: Record<string, string> = { info: "", good: "text-primary", bad: "text-destructive", loot: "text-accent", lore: "text-magic", combat: "text-muted-foreground" };
+const LOG_CLS: Record<string, string> = { info: "text-muted-foreground", good: "text-muted-foreground", bad: "text-destructive", loot: "text-loot", lore: "text-magic", combat: "text-destructive" };
 const LOG_IC: Record<string, string> = { info: "•", good: "✓", bad: "✗", loot: "◆", lore: "❖", combat: "⚔" };
 function logIcon(l: { text: string; type: string }) {
   const t = l.text;
@@ -1079,7 +1095,7 @@ function LogList({ s, n }: { s: GameState; n: number }) {
   return (
     <ul className="space-y-1">
       {s.log.slice(0, n).map((l, i) => (
-        <li key={l.t + "-" + i} className={`${LOG_CLS[l.type]} ${i === 0 ? "log-new" : "opacity-80"}`}>
+        <li key={l.t + "-" + i} className={`${LOG_CLS[l.type]} border-l-2 border-current pl-2 ${i === 0 ? "log-new" : ""}`}>
           <span className="log-ic" aria-hidden="true">{logIcon(l)}</span>{l.text}
         </li>
       ))}
