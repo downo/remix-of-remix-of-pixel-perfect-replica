@@ -49,7 +49,7 @@ const TAB_GROUPS: { name: string; items: { id: Tab; icon: string; label: string 
     { id: "today", icon: "☀️", label: "Täna" }, { id: "gear", icon: "🧍", label: "Tegelane" },
     { id: "inv", icon: "🎒", label: "Inventar" }, { id: "pet", icon: "🐾", label: "Lemmik" },
   ] },
-  { name: "Eellujäämine", items: [
+  { name: "Ellujäämine", items: [
     { id: "base", icon: "🏠", label: "Baas" }, { id: "craft", icon: "🔨", label: "Crafting" },
     { id: "map", icon: "🗺️", label: "Kaart" }, { id: "exp", icon: "🧭", label: "Retked" },
   ] },
