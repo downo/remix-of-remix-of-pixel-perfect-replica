@@ -254,13 +254,13 @@ export default function Game() {
 
         <main className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="px-panel grid gap-3 px-3 py-2 md:grid-cols-[minmax(0,1fr)_auto]">
-            <div className="min-w-0 space-y-2">
+            <div className="min-w-0 space-y-1.5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span className="px-title text-accent">{reg.icon} {reg.name}</span>
                 <span className="text-base text-muted-foreground">Päev {c.day} · {c.night ? "🌙" : "☀️"} {c.label} · {reg.danger ? <span className="text-destructive">{"☠".repeat(reg.danger)} ohtlik</span> : <span className="text-primary">🟢 turvaline</span>}</span>
               </div>
               <p className="text-base text-muted-foreground">{reg.desc}</p>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-2 xl:grid-cols-3">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1 xl:grid-cols-3">
                 <HudStat label="Elud" icon="❤️" value={s.hp} max={s.maxHp} tone="text-destructive" />
                 <HudStat label="Energia" icon="⚡" value={s.energy} tone="text-energy" />
                 <HudStat label="Kõht" icon="🍖" value={s.food} tone="text-food" warning={s.food <= 20} />
@@ -274,7 +274,7 @@ export default function Game() {
               </div>
               <div className="flex items-center gap-2 text-base">
                 <span className="text-muted-foreground">XP</span>
-                <progress className="hud-meter min-w-0 flex-1 text-primary" aria-label="Kogemus" value={Math.max(0, Math.min(s.xp, xpForLevel(s.level)))} max={xpForLevel(s.level)} />
+                <progress className="hud-meter hud-slim min-w-0 flex-1 text-primary" aria-label="Kogemus" value={Math.max(0, Math.min(s.xp, xpForLevel(s.level)))} max={xpForLevel(s.level)} />
                 <span className="text-muted-foreground">{s.xp}/{xpForLevel(s.level)}</span>
               </div>
               {(() => {
