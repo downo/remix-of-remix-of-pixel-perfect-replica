@@ -27,6 +27,7 @@ User picked (all options): story ending + boss, achievements, companion (Väike 
 - [x] Visuals + audio pass: sound engine (blips, per-region ambience, base music, log-line sounds), player portrait, night/weather overlays, journal icons, screen shake + dust impacts, button press feel, rift + clan pictures
 
 # Presentation refinement
+- [ ] Add visual HUD meters with semantic colors and color-code journal event types; verify in the game.
 - [x] Remove distracting background overlays and increase right-hand journal text.
 - [x] Redesign equipment presentation without changing equipment rules.
 - [x] Suggest faction-specific missions, exclusive equipment and consequential alliances (ideas only).

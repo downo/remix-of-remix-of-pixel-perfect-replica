@@ -31,6 +31,8 @@
   --color-water: var(--water);
   --color-food: var(--food);
   --color-rad: var(--rad);
+  --color-energy: var(--energy);
+  --color-loot: var(--loot);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -49,7 +51,7 @@
   --secondary: oklch(0.26 0.012 150);
   --secondary-foreground: oklch(0.86 0.03 140);
   --muted: oklch(0.23 0.01 150);
-  --muted-foreground: oklch(0.6 0.03 140);
+  --muted-foreground: oklch(0.7 0.01 140);
   --accent: oklch(0.72 0.17 55);
   --accent-foreground: oklch(0.14 0.02 50);
   --destructive: oklch(0.62 0.22 25);
@@ -57,7 +59,9 @@
   --magic: oklch(0.7 0.15 230);
   --water: oklch(0.68 0.13 235);
   --food: oklch(0.72 0.15 70);
-  --rad: oklch(0.85 0.19 120);
+  --rad: oklch(0.88 0.24 140);
+  --energy: oklch(0.87 0.17 95);
+  --loot: oklch(0.83 0.15 85);
   --border: oklch(0.34 0.02 150);
   --input: oklch(0.3 0.02 150);
   --ring: oklch(0.82 0.2 145);
@@ -128,6 +132,10 @@
   .px-row > .px-row-main { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .px-row > .px-row-act { display: flex; flex-shrink: 0; align-items: center; gap: 6px; }
   .px-bar { height: 10px; background: var(--muted); border: 2px solid var(--border); position: relative; }
+  .hud-meter { display: block; appearance: none; width: 100%; height: 12px; overflow: hidden; border: 1px solid var(--border); border-radius: 0; background: var(--muted); }
+  .hud-meter::-webkit-progress-bar { background: var(--muted); }
+  .hud-meter::-webkit-progress-value { background: currentColor; }
+  .hud-meter::-moz-progress-bar { background: currentColor; }
   .px-bar > span { position: absolute; inset: 0; right: auto; background-image: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 8px); }
   .glow { text-shadow: 0 0 8px color-mix(in oklab, var(--primary) 60%, transparent); }
   .blink { animation: blink 1s steps(2) infinite; }
@@ -188,6 +196,8 @@ html[data-theme="light"] {
   --water: oklch(0.48 0.13 240);
   --food: oklch(0.52 0.15 60);
   --rad: oklch(0.5 0.17 125);
+  --energy: oklch(0.49 0.1 95);
+  --loot: oklch(0.49 0.11 85);
   --border: oklch(0.72 0.03 140);
   --input: oklch(0.8 0.02 140);
   --ring: oklch(0.45 0.15 145);
