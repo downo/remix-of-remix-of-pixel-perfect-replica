@@ -95,7 +95,12 @@
     font-family: var(--font-pixel); font-size: 9px; letter-spacing: .05em;
     text-transform: uppercase; color: var(--foreground);
   }
+  .px-group-label {
+    font-family: var(--font-pixel); font-size: 7px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted-foreground); white-space: nowrap; padding: 0 2px 3px;
+  }
   .px-panel {
+
     background: var(--card);
     border: 2px solid var(--border);
     box-shadow: inset 2px 2px 0 color-mix(in oklab, var(--foreground) 8%, transparent), inset -2px -2px 0 color-mix(in oklab, var(--background) 70%, transparent), 4px 4px 0 color-mix(in oklab, var(--background) 80%, black);
