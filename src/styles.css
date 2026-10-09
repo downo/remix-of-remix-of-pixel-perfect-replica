@@ -136,6 +136,7 @@
   .hud-meter::-webkit-progress-bar { background: var(--muted); }
   .hud-meter::-webkit-progress-value { background: currentColor; }
   .hud-meter::-moz-progress-bar { background: currentColor; }
+  .hud-slim { height: 6px; border-width: 1px; }
   .px-bar > span { position: absolute; inset: 0; right: auto; background-image: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 8px); }
   .glow { text-shadow: 0 0 8px color-mix(in oklab, var(--primary) 60%, transparent); }
   .blink { animation: blink 1s steps(2) infinite; }
