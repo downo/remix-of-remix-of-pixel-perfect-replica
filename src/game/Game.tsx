@@ -745,16 +745,21 @@ function CraftTab({ s, mut, busy, onDetail }: { s: GameState; mut: Mut; busy: bo
         {RECIPES.map((r) => {
           const it = ITEMS[r.out];
           const stationOk = !r.station || s.structures[r.station];
+          const ready = stationOk && hasB(s, r.cost);
           return (
-            <div key={r.id} className={`border-2 p-2 ${stationOk ? "" : "opacity-50"}`}>
+            <div key={r.id} className={`border-2 p-2 ${!stationOk ? "border-border opacity-50" : ready ? "border-primary/60 bg-primary/5" : "border-destructive/40"}`}>
               <div><span className="cursor-pointer hover:text-primary" onClick={() => onDetail(r.out)}>{it.icon} {it.name}</span> {r.qty > 1 && `×${r.qty}`}</div>
               <div className="text-base text-muted-foreground">{it.desc}</div>
-              {!stationOk ? <div className="text-base text-destructive">Vajab: {STRUCTURES[r.station!].icon} {STRUCTURES[r.station!].name}</div> : (
-                <div className="mt-1 flex items-center justify-between gap-2">
-                  <span className={`text-base ${hasB(s, r.cost) ? "" : "text-destructive"}`}>{costText(r.cost)} · {fmt(durationFor(s, "craft", r.id))}</span>
-                  <button disabled={busy || !hasB(s, r.cost)} className="px-btn" onClick={() => mut((g) => startAction(g, "craft", `🔨 Valmistad: ${it.name}`, r.id))}>Tee</button>
+              {!stationOk ? <div className="text-base text-destructive">Vajab: {STRUCTURES[r.station!].icon} {STRUCTURES[r.station!].name}</div> : (<>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {Object.entries(r.cost).map(([k, n]) => { const ok = hasB(s, { [k]: n } as typeof r.cost); return (
+                    <span key={k} className={`border px-1 text-sm ${ok ? "border-primary/50 text-primary" : "border-destructive/50 text-destructive"}`}>{ok ? "✓" : "✗"} {ITEMS[k]?.icon ?? ""} {ITEMS[k]?.name ?? k} ×{n}</span>); })}
                 </div>
-              )}
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <span className="text-sm text-muted-foreground">⏱ {fmt(durationFor(s, "craft", r.id))}</span>
+                  <button disabled={busy || !ready} className={`px-btn ${ready ? "px-btn-primary" : "opacity-50 grayscale"}`} onClick={() => mut((g) => startAction(g, "craft", `🔨 Valmistad: ${it.name}`, r.id))}>🔨 Meisterda</button>
+                </div>
+              </>)}
             </div>
           );
         })}
