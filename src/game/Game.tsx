@@ -207,9 +207,9 @@ export default function Game() {
   // Strong hit (>= 20% of max HP in one go) shakes the main view briefly.
   const hpNow = s?.hp ?? 0;
   const prevHp = useRef(hpNow);
-  const [shakeKey, setShakeKey] = useState(0);
+  const [shaking, setShaking] = useState(false);
   useEffect(() => {
-    if (s && prevHp.current - hpNow >= s.maxHp * 0.2) setShakeKey((k) => k + 1);
+    if (s && prevHp.current - hpNow >= s.maxHp * 0.2) { setShaking(true); setTimeout(() => setShaking(false), 350); }
     prevHp.current = hpNow;
   }, [hpNow]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -231,7 +231,7 @@ export default function Game() {
   const critical = s.food <= 20 || s.water <= 20 || s.rad >= 90;
 
   return (
-    <div key={shakeKey} className={`mx-auto flex min-h-screen max-w-7xl flex-col gap-2 p-2 md:p-3 ${shakeKey ? "shake" : ""}`}>
+    <div className={`mx-auto flex min-h-screen max-w-7xl flex-col gap-2 p-2 md:p-3 ${shaking ? "shake" : ""}`}>
       {critical && <div aria-hidden="true" className="danger-edge pointer-events-none fixed inset-0 z-40" />}
       <div className="pointer-events-none fixed right-2 top-2 z-50 flex w-80 max-w-[90vw] flex-col gap-1" aria-live="polite">
         {notes.map((n) => <div key={n.t} className={`px-panel fadein px-3 py-2 text-base ${n.type === "bad" ? "border-destructive text-destructive" : "border-primary text-primary"}`}>{n.text}</div>)}
