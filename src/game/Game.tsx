@@ -43,13 +43,27 @@ function MeetPopup({ s }: { s: GameState }) {
 }
 
 type Tab = "today" | "exp" | "world" | "base" | "map" | "inv" | "gear" | "craft" | "quests" | "npc" | "pet" | "bar" | "skills" | "ach" | "stats" | "log" | "online" | "settings";
-const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: "today", icon: "☀️", label: "Täna" }, { id: "log", icon: "📜", label: "Päevik" }, { id: "quests", icon: "📖", label: "Ülesanded" },
-  { id: "gear", icon: "🧍", label: "Tegelane" }, { id: "inv", icon: "🎒", label: "Inventar" }, { id: "craft", icon: "🔨", label: "Crafting" },
-  { id: "base", icon: "🏠", label: "Baas" }, { id: "map", icon: "🗺️", label: "Kaart" }, { id: "exp", icon: "🧭", label: "Retked" }, { id: "world", icon: "🌍", label: "Maailm" },
-  { id: "npc", icon: "👥", label: "NPC-d" }, { id: "bar", icon: "🍺", label: "Baar" }, { id: "pet", icon: "🐾", label: "Lemmik" },
-  { id: "online", icon: "🌐", label: "Mitmikmäng" }, { id: "stats", icon: "📊", label: "Statistika" }, { id: "settings", icon: "⚙️", label: "Seaded" },
+// Menu is split into four labelled groups so the sidebar stays balanced.
+const TAB_GROUPS: { name: string; items: { id: Tab; icon: string; label: string }[] }[] = [
+  { name: "Sina & status", items: [
+    { id: "today", icon: "☀️", label: "Täna" }, { id: "gear", icon: "🧍", label: "Tegelane" },
+    { id: "inv", icon: "🎒", label: "Inventar" }, { id: "pet", icon: "🐾", label: "Lemmik" },
+  ] },
+  { name: "Ellujäämine", items: [
+    { id: "base", icon: "🏠", label: "Baas" }, { id: "craft", icon: "🔨", label: "Crafting" },
+    { id: "map", icon: "🗺️", label: "Kaart" }, { id: "exp", icon: "🧭", label: "Retked" },
+  ] },
+  { name: "Lugu & suhted", items: [
+    { id: "log", icon: "📜", label: "Päevik" }, { id: "quests", icon: "📖", label: "Ülesanded" },
+    { id: "npc", icon: "👥", label: "NPC-d" }, { id: "bar", icon: "🍺", label: "Baar" },
+    { id: "world", icon: "🌍", label: "Maailm" },
+  ] },
+  { name: "Süsteem", items: [
+    { id: "online", icon: "🌐", label: "Mitmikmäng" }, { id: "stats", icon: "📊", label: "Statistika" },
+    { id: "settings", icon: "⚙️", label: "Seaded" },
+  ] },
 ];
+
 
 // Varustus, Oskuspuu and Saavutused share one menu button ("Tegelane") with sub-tabs.
 const HERO_TABS: { id: Tab; label: string }[] = [{ id: "gear", label: "⚔️ Varustus" }, { id: "skills", label: "⭐ Oskuspuu" }, { id: "ach", label: "🏆 Saavutused" }];
@@ -209,13 +223,20 @@ export default function Game() {
       </header>
 
       <div className="flex flex-1 flex-col gap-2 md:flex-row">
-        <nav aria-label="Mängu menüü" className="px-panel flex shrink-0 gap-1 overflow-x-auto p-1 md:w-44 md:flex-col md:overflow-visible">
-          {TABS.map((t) => (
-            <button key={t.id} title={t.label} aria-label={t.label} aria-current={(t.id === "gear" ? isHeroTab(tab) : tab === t.id) ? "page" : undefined} onClick={() => setTab(t.id === "gear" && isHeroTab(tab) ? tab : t.id)} className={`flex min-h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded px-2 text-left transition-colors hover:bg-muted ${(t.id === "gear" ? isHeroTab(tab) : tab === t.id) ? "bg-muted text-primary" : "text-muted-foreground"}`}>
-              <span aria-hidden="true" className="w-6 shrink-0 text-center">{t.icon}</span><span className="hidden sm:inline">{t.label}</span>
-            </button>
+        <nav aria-label="Mängu menüü" className="px-panel flex shrink-0 flex-wrap items-center gap-1 overflow-x-auto p-1 md:w-44 md:flex-col md:items-stretch md:overflow-visible">
+          {TAB_GROUPS.map((g, gi) => (
+            <div key={g.name} className={`flex shrink-0 items-center gap-1 md:w-full md:flex-col md:items-stretch md:gap-0.5 ${gi ? "md:mt-1.5 md:border-t md:border-border md:pt-1.5" : ""}`}>
+              <span className="px-group-label hidden md:block">{g.name}</span>
+              {gi > 0 && <span aria-hidden="true" className="mx-1 h-6 w-px shrink-0 bg-border md:hidden" />}
+              {g.items.map((t) => (
+                <button key={t.id} title={t.label} aria-label={t.label} aria-current={(t.id === "gear" ? isHeroTab(tab) : tab === t.id) ? "page" : undefined} onClick={() => setTab(t.id === "gear" && isHeroTab(tab) ? tab : t.id)} className={`flex min-h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded px-2 text-left transition-colors hover:bg-muted md:w-full ${(t.id === "gear" ? isHeroTab(tab) : tab === t.id) ? "bg-muted text-primary" : "text-muted-foreground"}`}>
+                  <span aria-hidden="true" className="w-6 shrink-0 text-center">{t.icon}</span><span className="hidden sm:inline">{t.label}</span>
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
+
 
         <main className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="px-panel grid gap-3 px-3 py-2 md:grid-cols-[minmax(0,1fr)_auto]">
