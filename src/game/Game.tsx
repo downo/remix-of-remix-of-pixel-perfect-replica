@@ -639,21 +639,35 @@ function InvTab({ s, mut, onDetail }: { s: GameState; mut: Mut; onDetail: (id: s
         <select className="px-panel px-2 py-1" value={sort} onChange={(e) => setSort(e.target.value as "name" | "qty" | "type")} aria-label="Sorteeri"><option value="type">Tüübi järgi</option><option value="name">Nime järgi</option><option value="qty">Koguse järgi</option></select>
       </div>
       {!items.length && <p className="text-muted-foreground">Tühi.</p>}
-      <div className="grid gap-1 sm:grid-cols-2">
-        {items.map(([id, n]) => {
-          const it = ITEMS[id];
-          const usable = ["food", "drink", "medicine", "weapon", "armor", "head", "boots", "tool"].includes(it.type);
-          return (
-            <div key={id} className="flex cursor-pointer items-center gap-2 border-2 p-1 hover:border-primary" onClick={() => onDetail(id)}>
-              <span className="text-2xl">{it.icon}</span>
-              <div className="min-w-0 flex-1"><div>{it.name} <span className="text-accent">×{n}</span></div><div className="truncate text-base text-muted-foreground">{it.desc}</div></div>
-              {usable && <button className="px-btn" onClick={(e) => { e.stopPropagation(); mut((g) => useItem(g, id)); }}>{["weapon", "armor", "head", "boots", "tool"].includes(it.type) ? "Varusta" : "Kasuta"}</button>}
-              {chestHere && id !== "cash" && <button className="px-btn" title="Pane kõik kasti" onClick={(e) => { e.stopPropagation(); mut((g) => chestPut(g, id, n)); }}>🧰</button>}
-              {id !== "cash" && <button className="px-btn" title="Viska üks ära (Shift = kõik)" aria-label={`Viska ära ${it.name}`} onClick={(e) => { e.stopPropagation(); const all = e.shiftKey || (n > 1 && confirm(`Viska ära kõik ${it.name} ×${n}? (Tühista = ainult 1)`)); mut((g) => dropItem(g, id, all ? n : 1)); }}>🗑️</button>}
+      {([["⚔️ Varustus", ["weapon", "armor", "head", "boots", "tool"]], ["🍖 Toit ja ravim", ["food", "drink", "medicine"]], ["🪵 Ressursid ja muu", null]] as const).map(([title, types]) => {
+        const EQ = ["weapon", "armor", "head", "boots", "tool", "food", "drink", "medicine"];
+        const group = items.filter(([id]) => types ? (types as readonly string[]).includes(ITEMS[id].type) : !EQ.includes(ITEMS[id].type));
+        if (!group.length) return null;
+        return (
+          <section key={title} className="mb-3">
+            <h3 className="px-title mb-1 text-muted-foreground">{title} · {group.length}</h3>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-1.5">
+              {group.map(([id, n]) => {
+                const it = ITEMS[id];
+                const gear = ["weapon", "armor", "head", "boots", "tool"].includes(it.type);
+                const usable = gear || ["food", "drink", "medicine"].includes(it.type);
+                return (
+                  <div key={id} title={it.desc} className="relative flex cursor-pointer flex-col items-center border-2 border-border bg-card p-1 pt-2 hover:border-primary" onClick={() => onDetail(id)}>
+                    <span className="absolute right-1 top-0.5 text-sm text-accent">×{n}</span>
+                    <span className="text-4xl leading-none">{it.icon}</span>
+                    <span className="mt-1 line-clamp-2 min-h-[2.4em] text-center text-sm leading-tight">{it.name}</span>
+                    <div className="mt-1 flex w-full justify-center gap-0.5">
+                      {usable && <button className="px-btn flex-1 px-1 text-sm" title={gear ? "Varusta" : "Kasuta"} aria-label={`${gear ? "Varusta" : "Kasuta"} ${it.name}`} onClick={(e) => { e.stopPropagation(); mut((g) => useItem(g, id)); }}>{gear ? "⚔️" : "✓"}</button>}
+                      {chestHere && id !== "cash" && <button className="px-btn px-1 text-sm" title="Pane kõik kasti" onClick={(e) => { e.stopPropagation(); mut((g) => chestPut(g, id, n)); }}>🧰</button>}
+                      {id !== "cash" && <button className="px-btn px-1 text-sm" title="Viska üks ära (Shift = kõik)" aria-label={`Viska ära ${it.name}`} onClick={(e) => { e.stopPropagation(); const all = e.shiftKey || (n > 1 && confirm(`Viska ära kõik ${it.name} ×${n}? (Tühista = ainult 1)`)); mut((g) => dropItem(g, id, all ? n : 1)); }}>🗑️</button>}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
+          </section>
+        );
+      })}
       <H>📿 Talismanid ({(s.relics || []).filter((r) => r.uid !== s.charm).length})</H>
       {!(s.relics || []).filter((r) => r.uid !== s.charm).length && <p className="text-muted-foreground">Kotis pole talismane.{s.charm ? " Kantav on näha Varustuse all." : ""}</p>}
       <div className="grid gap-1 sm:grid-cols-2">
