@@ -81,7 +81,7 @@ function HudStat({ label, icon, value, max = 100, tone, warning = false }: {
         <span className="whitespace-nowrap">{icon} {label}</span>
         <span className={`whitespace-nowrap tabular-nums ${warning ? "text-destructive" : "text-muted-foreground"}`}>{warning && <span aria-label="Hoiatus">! </span>}{Math.round(current)}/{max}</span>
       </div>
-      <progress className={`hud-meter hud-slim ${tone}`} aria-label={label} value={current} max={max} />
+      <progress className={`hud-meter hud-slim ${tone} ${warning ? "danger-flash" : ""}`} aria-label={label} value={current} max={max} />
     </div>
   );
 }
@@ -204,6 +204,15 @@ export default function Game() {
     setScene(sc, { music: sc === "camp", night: isNight });
   }, [s?.region, tab, isNight, prefsTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Strong hit (>= 20% of max HP in one go) shakes the main view briefly.
+  const hpNow = s?.hp ?? 0;
+  const prevHp = useRef(hpNow);
+  const [shakeKey, setShakeKey] = useState(0);
+  useEffect(() => {
+    if (s && prevHp.current - hpNow >= s.maxHp * 0.2) setShakeKey((k) => k + 1);
+    prevHp.current = hpNow;
+  }, [hpNow]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!s) return <div className="flex min-h-screen items-center justify-center px-title text-primary glow">LAADIN<span className="blink">_</span></div>;
 
   if (authUser === undefined) return <div className="flex min-h-screen items-center justify-center px-title text-primary glow">LAADIN<span className="blink">_</span></div>;
@@ -219,9 +228,11 @@ export default function Game() {
 
   const c = clock(s); const w = weatherFor(s); const se = seasonFor(s); const reg = REGIONS[s.region];
   const busy = !canStart(s);
+  const critical = s.food <= 20 || s.water <= 20 || s.rad >= 90;
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-2 p-2 md:p-3">
+    <div key={shakeKey} className={`mx-auto flex min-h-screen max-w-7xl flex-col gap-2 p-2 md:p-3 ${shakeKey ? "shake" : ""}`}>
+      {critical && <div aria-hidden="true" className="danger-edge pointer-events-none fixed inset-0 z-40" />}
       <div className="pointer-events-none fixed right-2 top-2 z-50 flex w-80 max-w-[90vw] flex-col gap-1" aria-live="polite">
         {notes.map((n) => <div key={n.t} className={`px-panel fadein px-3 py-2 text-base ${n.type === "bad" ? "border-destructive text-destructive" : "border-primary text-primary"}`}>{n.text}</div>)}
       </div>
@@ -1113,8 +1124,8 @@ function logIcon(l: { text: string; type: string }) {
 function LogList({ s, n }: { s: GameState; n: number }) {
   return (
     <ul className="space-y-1">
-      {s.log.slice(0, n).map((l, i) => (
-        <li key={l.t + "-" + i} className={`${LOG_CLS[l.type]} border-l-2 border-current pl-2 ${i === 0 ? "log-new" : ""}`}>
+      {s.log.slice(0, n).map((l, i, arr) => (
+        <li key={l.t + "-" + l.text + "-" + arr.slice(0, i).filter((x) => x.t === l.t && x.text === l.text).length} className={`${LOG_CLS[l.type]} fadein border-l-2 border-current pl-2`}>
           <span className="log-ic" aria-hidden="true">{logIcon(l)}</span>{l.text}
         </li>
       ))}
