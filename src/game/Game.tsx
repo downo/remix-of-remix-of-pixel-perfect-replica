@@ -76,12 +76,12 @@ function HudStat({ label, icon, value, max = 100, tone, warning = false }: {
 }) {
   const current = Math.max(0, Math.min(max, value));
   return (
-    <div className="min-w-0 space-y-1">
-      <div className="flex items-center justify-between gap-1 text-base">
+    <div className="min-w-0 space-y-0.5">
+      <div className="flex items-center justify-between gap-1 text-sm leading-none">
         <span className="whitespace-nowrap">{icon} {label}</span>
         <span className={`whitespace-nowrap tabular-nums ${warning ? "text-destructive" : "text-muted-foreground"}`}>{warning && <span aria-label="Hoiatus">! </span>}{Math.round(current)}/{max}</span>
       </div>
-      <progress className={`hud-meter ${tone}`} aria-label={label} value={current} max={max} />
+      <progress className={`hud-meter hud-slim ${tone}`} aria-label={label} value={current} max={max} />
     </div>
   );
 }
